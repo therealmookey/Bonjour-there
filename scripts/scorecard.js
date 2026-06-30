@@ -1,7 +1,6 @@
 // scripts/scorecard.js - Scorecard fetching and rendering
-// Use a CORS proxy to avoid browser restrictions
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-// Class colors
+
+// Class colors for visual indicators
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -18,9 +17,6 @@ const CLASS_COLORS = {
     'Evoker': '#33937F'
 };
 
-// Proxy URL for bypassing CORS
-const CORS_PROXY = 'https://corsproxy.io/?';
-
 // ============================================
 // STEP 1: Get an access token from Blizzard
 // ============================================
@@ -32,11 +28,11 @@ async function getBlizzardToken() {
         throw new Error('Please set your Blizzard Client Secret in config.js');
     }
     
-    const targetUrl = 'https://oauth.battle.net/token';
+    const url = 'https://oauth.battle.net/token';
     const credentials = btoa(BLIZZARD_CLIENT_ID + ':' + BLIZZARD_CLIENT_SECRET);
     
     try {
-        const response = await fetch(CORS_PROXY + encodeURIComponent(targetUrl), {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Authorization': 'Basic ' + credentials,
@@ -63,12 +59,14 @@ async function fetchGuildData(guild, realm, region) {
     const token = await getBlizzardToken();
     const baseUrl = 'https://' + region + '.api.blizzard.com';
     
-    // First, get the guild roster through proxy
-   const rosterUrl = CORS_PROXY + encodeURIComponent(baseUrl + '/profile/wow/guild/' + realm + '/' + guild + '/roster');
-    const rosterResponse = await fetch(CORS_PROXY + encodeURIComponent(rosterUrl), {
+    // Build the URL - using /profile/ endpoint
+    const rosterUrl = baseUrl + '/profile/wow/guild/' + realm + '/' + guild + '/roster';
+    console.log('📡 Fetching:', rosterUrl);
+    
+    const rosterResponse = await fetch(rosterUrl, {
         headers: {
             'Authorization': 'Bearer ' + token,
-            'Battlenet-Namespace': 'dynamic-' + region
+            'Battlenet-Namespace': 'profile-' + region
         }
     });
     
@@ -96,7 +94,7 @@ async function fetchGuildData(guild, realm, region) {
         const charUrl = baseUrl + '/profile/wow/character/' + realm + '/' + charName.toLowerCase();
         
         try {
-            const charResponse = await fetch(CORS_PROXY + encodeURIComponent(charUrl), {
+            const charResponse = await fetch(charUrl, {
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Battlenet-Namespace': 'profile-' + region
@@ -142,9 +140,13 @@ async function fetchGuildData(guild, realm, region) {
 // STEP 3: Display the scorecard
 // ============================================
 async function fetchScorecard() {
+    console.log('🏈 fetchScorecard called!');
+    
     const guild = document.getElementById('guildInput').value.trim();
     const realm = document.getElementById('realmInput').value.trim();
     const region = document.getElementById('regionSelect').value;
+    
+    console.log('📡 Searching for:', guild, 'on', realm, '(', region, ')');
     
     if (!guild || !realm) {
         showError('Please enter both guild name and realm');
@@ -254,4 +256,9 @@ function showError(message) {
     errorDiv.classList.remove('hidden');
 }
 
+// ============================================
+// MAKE SURE THE FUNCTION IS GLOBAL
+// ============================================
 window.fetchScorecard = fetchScorecard;
+
+console.log('✅ scorecard.js loaded! fetchScorecard is ready.');
