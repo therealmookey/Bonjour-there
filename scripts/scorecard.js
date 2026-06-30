@@ -1,8 +1,6 @@
 // scripts/scorecard.js - Scorecard fetching and rendering
 
-// ============================================
-// Class colors for visual indicators
-// ============================================
+// Class colors
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -19,11 +17,13 @@ const CLASS_COLORS = {
     'Evoker': '#33937F'
 };
 
+// Proxy URL for bypassing CORS
+const CORS_PROXY = 'https://corsproxy.io/?';
+
 // ============================================
 // STEP 1: Get an access token from Blizzard
 // ============================================
 async function getBlizzardToken() {
-    // Use credentials from config.js
     if (typeof BLIZZARD_CLIENT_ID === 'undefined' || BLIZZARD_CLIENT_ID === 'your_client_id_here') {
         throw new Error('Please set your Blizzard Client ID in config.js');
     }
@@ -31,11 +31,11 @@ async function getBlizzardToken() {
         throw new Error('Please set your Blizzard Client Secret in config.js');
     }
     
-    const url = 'https://oauth.battle.net/token';
+    const targetUrl = 'https://oauth.battle.net/token';
     const credentials = btoa(BLIZZARD_CLIENT_ID + ':' + BLIZZARD_CLIENT_SECRET);
     
     try {
-        const response = await fetch(url, {
+        const response = await fetch(CORS_PROXY + encodeURIComponent(targetUrl), {
             method: 'POST',
             headers: {
                 'Authorization': 'Basic ' + credentials,
@@ -45,7 +45,7 @@ async function getBlizzardToken() {
         });
         
         if (!response.ok) {
-            throw new Error('Failed to get Blizzard access token. Check your Client ID and Secret.');
+            throw new Error('Failed to get Blizzard access token. Status: ' + response.status);
         }
         
         const data = await response.json();
@@ -62,9 +62,9 @@ async function fetchGuildData(guild, realm, region) {
     const token = await getBlizzardToken();
     const baseUrl = 'https://' + region + '.api.blizzard.com';
     
-    // First, get the guild roster
+    // First, get the guild roster through proxy
     const rosterUrl = baseUrl + '/data/wow/guild/' + realm + '/' + guild + '/roster';
-    const rosterResponse = await fetch(rosterUrl, {
+    const rosterResponse = await fetch(CORS_PROXY + encodeURIComponent(rosterUrl), {
         headers: {
             'Authorization': 'Bearer ' + token,
             'Battlenet-Namespace': 'dynamic-' + region
@@ -95,7 +95,7 @@ async function fetchGuildData(guild, realm, region) {
         const charUrl = baseUrl + '/profile/wow/character/' + realm + '/' + charName.toLowerCase();
         
         try {
-            const charResponse = await fetch(charUrl, {
+            const charResponse = await fetch(CORS_PROXY + encodeURIComponent(charUrl), {
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Battlenet-Namespace': 'profile-' + region
@@ -162,30 +162,20 @@ async function fetchScorecard() {
         
         // Update navigation
         const navGuild = document.getElementById('navGuildName');
-        if (navGuild) {
-            navGuild.textContent = data.guild;
-        }
+        if (navGuild) navGuild.textContent = data.guild;
         const navRealm = document.getElementById('navRealmName');
-        if (navRealm) {
-            navRealm.textContent = data.realm.toUpperCase();
-        }
+        if (navRealm) navRealm.textContent = data.realm.toUpperCase();
         
         // Update stats
         document.getElementById('memberCount').textContent = '👥 ' + data.total + ' Members';
         document.getElementById('lastUpdated').textContent = '🔄 ' + data.updated;
-        
-        // Update footer time
-        if (typeof updateFooterTime === 'function') {
-            updateFooterTime();
-        }
+        if (typeof updateFooterTime === 'function') updateFooterTime();
         
         // Calculate average iLvl
         const ilvls = data.members.map(function(m) { return m.item_level; }).filter(function(v) { return v > 0; });
         if (ilvls.length > 0) {
             var sum = 0;
-            for (var i = 0; i < ilvls.length; i++) {
-                sum += ilvls[i];
-            }
+            for (var i = 0; i < ilvls.length; i++) sum += ilvls[i];
             var avg = (sum / ilvls.length).toFixed(1);
             document.getElementById('avgIlvl').textContent = '📊 Avg iLvl: ' + avg;
         }
@@ -218,12 +208,10 @@ function renderScorecards(members) {
         var card = document.createElement('div');
         card.className = 'player-card';
         
-        // Add top 3 styling
         if (index === 0) card.classList.add('top-1');
         else if (index === 1) card.classList.add('top-2');
         else if (index === 2) card.classList.add('top-3');
         
-        // Rank emoji
         var rankEmoji = '' + (index + 1);
         if (index === 0) rankEmoji = '🥇';
         else if (index === 1) rankEmoji = '🥈';
@@ -265,5 +253,4 @@ function showError(message) {
     errorDiv.classList.remove('hidden');
 }
 
-// Expose fetchScorecard globally for onclick
 window.fetchScorecard = fetchScorecard;
