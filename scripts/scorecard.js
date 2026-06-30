@@ -1,7 +1,13 @@
-// scripts/scorecard.js - Scorecard fetching and rendering
-// Your Cloudflare Worker proxy URL
-const CORS_PROXY = 'https://bonjour-there.mikeyvandamme.workers.dev/?url='; // Uses your own Worker domain
-// Class colors for visual indicators
+// scripts/scorecard.js - Complete file with CORS proxy
+
+// ============================================
+// YOUR CLOUDFLARE WORKER PROXY URL
+// ============================================
+const CORS_PROXY = 'https://bonjour-there.mikeyvandamme.workers.dev/?url=';
+
+// ============================================
+// CLASS COLORS FOR VISUAL INDICATORS
+// ============================================
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -29,11 +35,12 @@ async function getBlizzardToken() {
         throw new Error('Please set your Blizzard Client Secret in config.js');
     }
     
-    const url = 'https://oauth.battle.net/token';
+    const targetUrl = 'https://oauth.battle.net/token';
+    const proxyUrl = CORS_PROXY + encodeURIComponent(targetUrl);
     const credentials = btoa(BLIZZARD_CLIENT_ID + ':' + BLIZZARD_CLIENT_SECRET);
     
     try {
-        const response = await fetch(url, {
+        const response = await fetch(proxyUrl, {
             method: 'POST',
             headers: {
                 'Authorization': 'Basic ' + credentials,
@@ -60,8 +67,10 @@ async function fetchGuildData(guild, realm, region) {
     const token = await getBlizzardToken();
     const baseUrl = 'https://' + region + '.api.blizzard.com';
     
-    // Build the URL - using /profile/ endpoint
-    const rosterUrl = baseUrl + '/profile/wow/guild/' + realm + '/' + guild + '/roster';
+    // Build the URL using the proxy
+    const rosterUrl = CORS_PROXY + encodeURIComponent(
+        baseUrl + '/profile/wow/guild/' + realm + '/' + guild + '/roster'
+    );
     console.log('📡 Fetching:', rosterUrl);
     
     const rosterResponse = await fetch(rosterUrl, {
@@ -92,7 +101,9 @@ async function fetchGuildData(guild, realm, region) {
     for (let i = 0; i < memberLimit; i++) {
         const member = members[i];
         const charName = member.character.name;
-        const charUrl = baseUrl + '/profile/wow/character/' + realm + '/' + charName.toLowerCase();
+        const charUrl = CORS_PROXY + encodeURIComponent(
+            baseUrl + '/profile/wow/character/' + realm + '/' + charName.toLowerCase()
+        );
         
         try {
             const charResponse = await fetch(charUrl, {
@@ -262,4 +273,4 @@ function showError(message) {
 // ============================================
 window.fetchScorecard = fetchScorecard;
 
-console.log('✅ scorecard.js loaded! fetchScorecard is ready.');
+console.log('✅ scorecard.js loaded! Proxy URL:', CORS_PROXY);
