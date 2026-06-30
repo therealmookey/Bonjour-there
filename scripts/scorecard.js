@@ -1,5 +1,6 @@
 // scripts/scorecard.js - Scorecard fetching and rendering
-
+// Your Cloudflare Worker proxy URL
+const CORS_PROXY = 'https://bonjour-there.mikeyvandamme.workers.dev/?url='; // Uses your own Worker domain
 // Class colors for visual indicators
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
