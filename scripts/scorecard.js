@@ -1,5 +1,6 @@
 // scripts/scorecard.js - Scorecard fetching and rendering
-
+// Use a CORS proxy to avoid browser restrictions
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 // Class colors
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
@@ -63,7 +64,7 @@ async function fetchGuildData(guild, realm, region) {
     const baseUrl = 'https://' + region + '.api.blizzard.com';
     
     // First, get the guild roster through proxy
-    const rosterUrl = baseUrl + '/data/wow/guild/' + realm + '/' + guild + '/roster';
+   const rosterUrl = CORS_PROXY + encodeURIComponent(baseUrl + '/profile/wow/guild/' + realm + '/' + guild + '/roster');
     const rosterResponse = await fetch(CORS_PROXY + encodeURIComponent(rosterUrl), {
         headers: {
             'Authorization': 'Bearer ' + token,

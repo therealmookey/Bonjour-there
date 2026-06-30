@@ -3,6 +3,7 @@
 // UPDATE THESE WITH YOUR GUILD INFORMATION
 // ============================================
 
+
 const CONFIG = {
     guild_name: 'Bonjour there',  // ← CHANGE THIS to your guild name
     realm: 'outland',           // ← CHANGE THIS to your realm (e.g., "Stormrage")
@@ -17,6 +18,8 @@ const CONFIG = {
 // ============================================
 const BLIZZARD_CLIENT_ID = '225bf87dd49b4ff09ea39e933eac5dfd';        // ← CHANGE THIS
 const BLIZZARD_CLIENT_SECRET = 's0syDCgvOYiU73VeY1iKiYUrqbD0Jrje'; // ← CHANGE THIS
+
+
 
 // TEST: Add this alert to confirm config.js loads
 alert('config.js loaded! Client ID: ' + BLIZZARD_CLIENT_ID);
