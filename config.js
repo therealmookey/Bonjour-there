@@ -5,7 +5,7 @@
 
 const CONFIG = {
     guild_name: 'Bonjour there',  // ← CHANGE THIS to your guild name
-    realm: 'Outland',           // ← CHANGE THIS to your realm (e.g., "Stormrage")
+    realm: 'outland',           // ← CHANGE THIS to your realm (e.g., "Stormrage")
     region: 'eu',                 // us, eu, kr, tw, cn
     site_name: 'Guild Scorecard',
     version: '1.0.0'
