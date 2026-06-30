@@ -3,7 +3,7 @@
 // ============================================
 // YOUR CLOUDFLARE WORKER PROXY URL
 // ============================================
-const CORS_PROXY = 'https://bonjour-there-2.mikeyvandamme.workers.dev//?url=';
+const CORS_PROXY = 'https://bonjourthere2.mikeyvandamme.workers.dev/?url=';
 
 // ============================================
 // CLASS COLORS FOR VISUAL INDICATORS
