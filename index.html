@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏈 Guild Scorecard</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/scorecard.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- ===== NAVIGATION - Loaded by JavaScript ===== -->
+        <div id="navigation"></div>
+        
+        <main>
+            <!-- ===== PAGE CONTENT ===== -->
+            <div class="page-content">
+                
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="input-group">
+                        <input type="text" id="guildInput" placeholder="Guild Name" value="">
+                        <input type="text" id="realmInput" placeholder="Realm" value="">
+                        <select id="regionSelect">
+                            <option value="us">US</option>
+                            <option value="eu">EU</option>
+                            <option value="kr">KR</option>
+                            <option value="tw">TW</option>
+                        </select>
+                        <button id="fetchBtn" onclick="fetchScorecard()">▶ LOAD ROSTER</button>
+                    </div>
+                    
+                    <div class="stats-bar">
+                        <span id="memberCount">👥 0 Members</span>
+                        <span id="avgIlvl">📊 Avg iLvl: --</span>
+                        <span id="lastUpdated">🔄 --</span>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Fetching guild data from Blizzard...</p>
+                </div>
+
+                <!-- Scorecard Grid -->
+                <div id="scorecardGrid" class="scorecard-grid">
+                    <div class="welcome-message">
+                        <h2>🏈 Welcome to the Guild Scorecard</h2>
+                        <p>Enter your guild name and realm above, then click "LOAD ROSTER"</p>
+                        <p class="hint">Example: Guild "Knights of Azeroth" on "Stormrage"</p>
+                        <p class="hint" style="margin-top:15px;color:#ffd700;">⚡ Get your Blizzard API credentials at developers.battle.net</p>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="error-message hidden"></div>
+            </div>
+        </main>
+        
+        <!-- ===== FOOTER - Loaded by JavaScript ===== -->
+        <div id="footer"></div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="config.js"></script>
+    <script src="scripts/main.js"></script>
+    <script src="scripts/scorecard.js"></script>
+</body>
+</html>

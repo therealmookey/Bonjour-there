@@ -1,0 +1,16 @@
+<!-- includes/header.html - Navigation (Update Once, Updates Every Page) -->
+<nav class="main-nav">
+    <div class="nav-brand">
+        <span class="sport-icon">🏈</span>
+        <span class="brand-text">GUILD SCORECARD</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="index.html" class="nav-link" data-page="home">Scoreboard</a></li>
+        <li><a href="about.html" class="nav-link" data-page="about">About</a></li>
+        <li><a href="#" onclick="fetchScorecard(); return false;" class="refresh-link">🔄 Refresh</a></li>
+    </ul>
+    <div class="nav-team">
+        <span id="navGuildName">Loading...</span>
+        <span class="nav-realm" id="navRealmName">REALM</span>
+    </div>
+</nav>

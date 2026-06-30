@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Guild Scorecard</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/scorecard.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- ===== NAVIGATION - Loaded by JavaScript ===== -->
+        <div id="navigation"></div>
+        
+        <main>
+            <!-- ===== PAGE CONTENT ===== -->
+            <div class="page-content about-page">
+                <h1>🏈 About This Scorecard</h1>
+                
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h2>What is this?</h2>
+                        <p>This is a football-style scorecard for World of Warcraft guild members. It shows character stats in a visual, easy-to-read format.</p>
+                        <p style="margin-top:10px;">Perfect for tracking guild progression and friendly competition!</p>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h2>How it works</h2>
+                        <p>The app uses the Blizzard API to fetch your guild roster and character data. It displays:</p>
+                        <ul style="list-style:none;padding:0;margin-top:10px;">
+                            <li>🏆 <strong>Item Level</strong> - Best gear score</li>
+                            <li>📈 <strong>Achievement Points</strong> - Total achievements</li>
+                            <li>👥 <strong>Character Class & Race</strong> - Visual indicators</li>
+                            <li>⭐ <strong>Rankings</strong> - 🥇🥈🥉 for top 3</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h2>Setup Instructions</h2>
+                        <ol style="padding-left:20px;color:#ccd6f6;">
+                            <li>Get API credentials from <a href="https://developers.battle.net" target="_blank" style="color:#ffd700;">developers.battle.net</a></li>
+                            <li>Add your Client ID & Secret to <code>config.js</code></li>
+                            <li>Update <code>config.js</code> with your guild info</li>
+                            <li>Push to GitHub and enable Pages</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="about-card">
+                        <h2>Tech Stack</h2>
+                        <ul style="list-style:none;padding:0;">
+                            <li>🌐 <strong>HTML + CSS</strong> - Sports-themed styling</li>
+                            <li>⚡ <strong>JavaScript</strong> - API calls and interactivity</li>
+                            <li>🎮 <strong>Blizzard API</strong> - Guild and character data</li>
+                            <li>🐙 <strong>GitHub Pages</strong> - Free hosting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- ===== FOOTER - Loaded by JavaScript ===== -->
+        <div id="footer"></div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="config.js"></script>
+    <script src="scripts/main.js"></script>
+    <script src="scripts/scorecard.js"></script>
+</body>
+</html>
