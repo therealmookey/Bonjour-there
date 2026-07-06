@@ -1,4 +1,4 @@
-// scorecard.js - Using public Blizzard API (no authentication needed)
+// scorecard.js - Using Raider.io API with correct guild name
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -16,16 +16,17 @@ const CLASS_COLORS = {
 };
 
 // ============================================
-// SIMPLER APPROACH: Use Blizzard's public API
+// FETCH GUILD DATA FROM RAIDER.IO
 // ============================================
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
     
-    const guild = document.getElementById('guildInput').value.trim();
+    // Get the raw guild name from input (with spaces, proper case)
+    const guildInput = document.getElementById('guildInput').value.trim();
     const realm = document.getElementById('realmInput').value.trim();
     const region = document.getElementById('regionSelect').value;
     
-    if (!guild || !realm) {
+    if (!guildInput || !realm) {
         showError('Please enter both guild name and realm');
         return;
     }
@@ -38,47 +39,49 @@ async function fetchScorecard() {
     document.getElementById('fetchBtn').textContent = '⏳ LOADING...';
     
     try {
-        // Use Blizzard's public profile API (no authentication required)
-        const apiUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${realm}&name=${encodeURIComponent(guild)}`;
+        // Use Raider.io API with the EXACT guild name (with spaces, proper case)
+        // Example: "Bonjour There" not "bonjour-there"
+        const apiUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${realm}&name=${encodeURIComponent(guildInput)}`;
         console.log('📡 Fetching from Raider.io:', apiUrl);
         
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.status}`);
+            if (response.status === 404) {
+                throw new Error(`Guild "${guildInput}" not found on "${realm}" (${region}). Try the full guild name with proper capitalization.`);
+            }
+            throw new Error(`Raider.io error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('📊 Data received:', data);
+        console.log('📊 Raider.io data received');
         
         if (!data.members || data.members.length === 0) {
-            throw new Error('No members found. Check guild name and realm.');
+            throw new Error('No members found. Guild might be empty or private.');
         }
         
         // Process members
         const members = data.members.map(member => {
-            const classId = member.character.class;
-            const className = getClassName(classId);
+            const charData = member.character;
+            const className = charData.class || 'Unknown';
             return {
-                name: member.character.name,
-                level: member.character.level,
+                name: charData.name || 'Unknown',
+                level: charData.level || 0,
                 class: className,
                 class_color: CLASS_COLORS[className] || '#FFFFFF',
-                race: member.character.race || 'Unknown',
-                item_level: member.character.items?.averageItemLevel || 0,
-                achievement_points: member.character.achievementPoints || 0,
+                race: charData.race || 'Unknown',
+                item_level: charData.items?.averageItemLevel || 0,
+                achievement_points: charData.achievementPoints || 0,
                 rank: member.rank || 0
             };
         });
         
-        // Sort by item level
+        // Sort by item level (highest first)
         members.sort((a, b) => (b.item_level || 0) - (a.item_level || 0));
         
-        // Update navigation
-        document.getElementById('navGuildName').textContent = data.name || guild;
+        // Update UI
+        document.getElementById('navGuildName').textContent = data.name || guildInput;
         document.getElementById('navRealmName').textContent = (data.realm || realm).toUpperCase();
-        
-        // Update stats
         document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
         document.getElementById('lastUpdated').textContent = `🔄 ${new Date().toLocaleString()}`;
         
@@ -93,13 +96,8 @@ async function fetchScorecard() {
         renderScorecards(members);
         
     } catch (error) {
-        // If Raider.io fails, try Blizzard's official data
-        console.warn('Raider.io failed, trying Blizzard API...', error);
-        try {
-            await fetchFromBlizzardAPI(guild, realm, region);
-        } catch (secondError) {
-            showError(`Failed to fetch guild data: ${secondError.message}`);
-        }
+        console.error('Error:', error);
+        showError(error.message || 'Failed to fetch guild data');
     } finally {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('fetchBtn').disabled = false;
@@ -108,50 +106,7 @@ async function fetchScorecard() {
 }
 
 // ============================================
-// FALLBACK: Try Blizzard's official API
-// ============================================
-async function fetchFromBlizzardAPI(guild, realm, region) {
-    // Use Blizzard's public profile endpoint (some data is public)
-    // Note: This may require authentication in some cases
-    const apiUrl = `https://${region}.api.blizzard.com/data/wow/guild/${realm}/${guild}/roster?namespace=dynamic-${region}`;
-    console.log('📡 Fallback to Blizzard API:', apiUrl);
-    
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-        throw new Error(`Blizzard API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('📊 Blizzard data:', data);
-    
-    // Process data (this will need to be adapted based on actual response)
-    // ... (similar processing as above)
-}
-
-// ============================================
-// Helper: Convert class ID to name
-// ============================================
-function getClassName(classId) {
-    const classes = {
-        1: 'Warrior',
-        2: 'Paladin',
-        3: 'Hunter',
-        4: 'Rogue',
-        5: 'Priest',
-        6: 'Death Knight',
-        7: 'Shaman',
-        8: 'Mage',
-        9: 'Warlock',
-        10: 'Monk',
-        11: 'Druid',
-        12: 'Demon Hunter',
-        13: 'Evoker'
-    };
-    return classes[classId] || 'Unknown';
-}
-
-// ============================================
-// Render scorecard cards
+// RENDER SCORECARD CARDS
 // ============================================
 function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
@@ -201,9 +156,11 @@ function renderScorecards(members) {
 }
 
 function showError(message) {
-    document.getElementById('errorMessage').textContent = '❌ ' + message;
-    document.getElementById('errorMessage').classList.remove('hidden');
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = '❌ ' + message;
+    errorDiv.classList.remove('hidden');
 }
 
+// Make function global
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded!');
+console.log('✅ scorecard.js loaded (Raider.io version)');
