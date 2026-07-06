@@ -1,155 +1,5 @@
-// scorecard.js - Complete fixed version for Raider.io
-const CLASS_COLORS = {
-    'Warrior': '#C79C6E',
-    'Paladin': '#F58CBA',
-    'Hunter': '#ABD473',
-    'Rogue': '#FFF569',
-    'Priest': '#FFFFFF',
-    'Death Knight': '#C41F3B',
-    'Shaman': '#0070DE',
-    'Mage': '#69CCF0',
-    'Warlock': '#9482C9',
-    'Monk': '#00FF96',
-    'Druid': '#FF7D0A',
-    'Demon Hunter': '#A330C9',
-    'Evoker': '#33937F'
-};
-
 // ============================================
-// HELPER: Convert class ID to name
-// ============================================
-function getClassName(classId) {
-    const classes = {
-        1: 'Warrior',
-        2: 'Paladin',
-        3: 'Hunter',
-        4: 'Rogue',
-        5: 'Priest',
-        6: 'Death Knight',
-        7: 'Shaman',
-        8: 'Mage',
-        9: 'Warlock',
-        10: 'Monk',
-        11: 'Druid',
-        12: 'Demon Hunter',
-        13: 'Evoker'
-    };
-    return classes[classId] || 'Unknown';
-}
-
-// ============================================
-// RENDER SCORECARD CARDS
-// ============================================
-function renderScorecards(members) {
-    const grid = document.getElementById('scorecardGrid');
-    if (!grid) {
-        console.error('❌ scorecardGrid element not found!');
-        return;
-    }
-    
-    grid.innerHTML = '';
-    
-    if (!members || members.length === 0) {
-        grid.innerHTML = '<p style="text-align:center;color:#8892b0;padding:40px;">No members found.</p>';
-        return;
-    }
-    
-    members.forEach((member, index) => {
-        const card = document.createElement('div');
-        card.className = 'player-card';
-        if (index === 0) card.classList.add('top-1');
-        else if (index === 1) card.classList.add('top-2');
-        else if (index === 2) card.classList.add('top-3');
-        
-        const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
-        const ilvlDisplay = member.item_level > 0 ? member.item_level : 'N/A';
-        
-        card.innerHTML = `
-            <div class="rank-badge">${rankEmoji}</div>
-            <div class="class-indicator" style="background: ${member.class_color || '#FFFFFF'};"></div>
-            <div class="card-header">
-                <div>
-                    <div class="player-name">${member.name || 'Unknown'}</div>
-                    <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
-                </div>
-            </div>
-            <div class="player-stats">
-                <div class="stat-item">
-                    <div class="stat-label">Level</div>
-                    <div class="stat-value">${member.level || 0}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Item Level</div>
-                    <div class="stat-value ilvl">${ilvlDisplay}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Achievements</div>
-                    <div class="stat-value">${(member.achievement_points || 0).toLocaleString()}</div>
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-// ============================================
-// SHOW ERROR MESSAGE
-// ============================================
-function showError(message) {
-    const errorDiv = document.getElementById('errorMessage');
-    if (errorDiv) {
-        errorDiv.textContent = '❌ ' + message;
-        errorDiv.classList.remove('hidden');
-    } else {
-        console.error('❌ Error:', message);
-    }
-}
-
-// ============================================
-// RENDER GUILD DATA
-// ============================================
-function renderGuildData(members, data) {
-    // Sort by item level (highest first)
-    members.sort((a, b) => (b.item_level || 0) - (a.item_level || 0));
-    
-    // Update navigation
-    const navGuild = document.getElementById('navGuildName');
-    if (navGuild) {
-        navGuild.textContent = data.name || document.getElementById('guildInput').value.trim();
-    }
-    
-    const navRealm = document.getElementById('navRealmName');
-    if (navRealm) {
-        navRealm.textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
-    }
-    
-    // Update stats
-    const memberCount = document.getElementById('memberCount');
-    if (memberCount) {
-        memberCount.textContent = `👥 ${members.length} Members`;
-    }
-    
-    const lastUpdated = document.getElementById('lastUpdated');
-    if (lastUpdated) {
-        lastUpdated.textContent = `🔄 ${new Date().toLocaleString()}`;
-    }
-    
-    // Calculate average iLvl
-    const ilvls = members.map(m => m.item_level).filter(v => v > 0);
-    if (ilvls.length > 0) {
-        const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
-        const avgEl = document.getElementById('avgIlvl');
-        if (avgEl) {
-            avgEl.textContent = `📊 Avg iLvl: ${avg}`;
-        }
-    }
-    
-    // Render cards
-    renderScorecards(members);
-}
-
-// ============================================
-// FETCH GUILD DATA FROM RAIDER.IO
+// FETCH GUILD DATA WITH ITEM LEVELS
 // ============================================
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
@@ -178,68 +28,104 @@ async function fetchScorecard() {
     }
     
     try {
-        // Use Raider.io API with fields parameter
-        const apiUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${realm}&name=${encodeURIComponent(guildInput)}&fields=members`;
-        console.log('📡 Fetching from Raider.io:', apiUrl);
+        // STEP 1: Get guild roster from Raider.io
+        const rosterUrl = `https://raider.io/api/v1/guilds/profile?region=${region}&realm=${realm}&name=${encodeURIComponent(guildInput)}&fields=members`;
+        console.log('📡 Fetching roster from Raider.io:', rosterUrl);
         
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error(`Guild "${guildInput}" not found on "${realm}" (${region}). Check spelling.`);
-            }
-            throw new Error(`Raider.io error: ${response.status}`);
+        const rosterResponse = await fetch(rosterUrl);
+        if (!rosterResponse.ok) {
+            throw new Error(`Raider.io error: ${rosterResponse.status}`);
         }
         
-        const data = await response.json();
-        console.log('📊 Raider.io data received');
-        console.log('📊 Members found:', data.members?.length || 0);
+        const rosterData = await rosterResponse.json();
+        console.log('📊 Roster found:', rosterData.members?.length || 0, 'members');
         
-        if (!data.members || data.members.length === 0) {
+        if (!rosterData.members || rosterData.members.length === 0) {
             throw new Error('No members found. The guild might be private.');
         }
         
-        // Process members from Raider.io
-        const members = data.members.map(member => {
-            const charData = member.character || member;
+        // STEP 2: Get token from your worker for Blizzard API
+        console.log('🔑 Getting Blizzard API token...');
+        const tokenResponse = await fetch('https://guild-api.mikeyvandamme.workers.dev/token');
+        if (!tokenResponse.ok) {
+            throw new Error('Failed to get Blizzard API token');
+        }
+        const tokenData = await tokenResponse.json();
+        const token = tokenData.token;
+        console.log('✅ Token obtained');
+        
+        // STEP 3: Fetch item levels for each character
+        const membersWithILvl = [];
+        const memberList = rosterData.members.slice(0, 20); // Limit to 20 for speed
+        
+        console.log('📡 Fetching item levels for', memberList.length, 'members...');
+        
+        for (let i = 0; i < memberList.length; i++) {
+            const member = memberList[i];
+            const charName = member.character.name;
+            const charRealm = member.character.realm?.slug || realm;
             
-            let className = charData.class || charData.class_name || 'Unknown';
-            if (typeof className === 'number') {
-                className = getClassName(className);
+            try {
+                // Call Blizzard API for character data
+                const charUrl = `https://${region}.api.blizzard.com/profile/wow/character/${charRealm}/${charName.toLowerCase()}?namespace=profile-${region}`;
+                const charResponse = await fetch(charUrl, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Battlenet-Namespace': `profile-${region}`
+                    }
+                });
+                
+                let itemLevel = 0;
+                let achievementPoints = member.character.achievement_points || 0;
+                
+                if (charResponse.ok) {
+                    const charData = await charResponse.json();
+                    // Item level is in equipped_item_level
+                    itemLevel = charData.equipped_item_level || 0;
+                    
+                    // Get achievement points if available
+                    if (charData.achievement_points) {
+                        achievementPoints = charData.achievement_points;
+                    }
+                    
+                    console.log(`✅ ${charName}: iLvl ${itemLevel}`);
+                } else {
+                    console.log(`⚠️ Could not fetch ${charName}: ${charResponse.status}`);
+                }
+                
+                membersWithILvl.push({
+                    name: charName,
+                    level: member.character.level || 0,
+                    class: member.character.class || 'Unknown',
+                    class_color: CLASS_COLORS[member.character.class] || '#FFFFFF',
+                    race: member.character.race || 'Unknown',
+                    item_level: itemLevel,
+                    achievement_points: achievementPoints,
+                    rank: member.rank || 0
+                });
+                
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+            } catch (error) {
+                console.warn(`⚠️ Error fetching ${charName}:`, error.message);
+                // Add member without iLvl
+                membersWithILvl.push({
+                    name: charName,
+                    level: member.character.level || 0,
+                    class: member.character.class || 'Unknown',
+                    class_color: CLASS_COLORS[member.character.class] || '#FFFFFF',
+                    race: member.character.race || 'Unknown',
+                    item_level: 0,
+                    achievement_points: member.character.achievement_points || 0,
+                    rank: member.rank || 0
+                });
             }
-            
-            const race = charData.race || charData.race_name || 'Unknown';
-            
-            let itemLevel = 0;
-            if (charData.items) {
-                itemLevel = charData.items.averageItemLevel || charData.items.item_level || 0;
-            } else if (charData.ilvl) {
-                itemLevel = charData.ilvl;
-            } else if (charData.item_level) {
-                itemLevel = charData.item_level;
-            }
-            
-            let achievementPoints = 0;
-            if (charData.achievementPoints) {
-                achievementPoints = charData.achievementPoints;
-            } else if (charData.achievement_points) {
-                achievementPoints = charData.achievement_points;
-            }
-            
-            return {
-                name: charData.name || 'Unknown',
-                level: charData.level || 0,
-                class: className,
-                class_color: CLASS_COLORS[className] || '#FFFFFF',
-                race: race,
-                item_level: itemLevel,
-                achievement_points: achievementPoints,
-                rank: member.rank || 0
-            };
-        });
+        }
         
         // Render the data
-        renderGuildData(members, data);
+        renderGuildData(membersWithILvl, rosterData);
+        console.log('✅ Done!', membersWithILvl.length, 'members loaded with iLvl');
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -254,10 +140,3 @@ async function fetchScorecard() {
         }
     }
 }
-
-// ============================================
-// MAKE FUNCTION GLOBAL FOR ONCLICK
-// ============================================
-window.fetchScorecard = fetchScorecard;
-
-console.log('✅ scorecard.js loaded (Raider.io version)');
