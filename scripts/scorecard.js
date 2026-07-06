@@ -16,7 +16,7 @@ const CLASS_COLORS = {
 };
 
 // Your new API endpoint
-const API_URL = 'https://guild-api.your-username.workers.dev';
+const API_URL = 'https://guild-api.mikeyvandamme.workers.dev';
 
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
