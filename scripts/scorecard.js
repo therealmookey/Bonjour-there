@@ -3,7 +3,7 @@
 // ============================================
 // YOUR CLOUDFLARE WORKER PROXY URL
 // ============================================
-const CORS_PROXY = 'https://corsproxy.io/?';
+const CORS_PROXY = 'https://thingproxy.freeboard.io/fetch/';
 
 // ============================================
 // CLASS COLORS FOR VISUAL INDICATORS
