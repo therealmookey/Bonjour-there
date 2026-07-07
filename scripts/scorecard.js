@@ -1,4 +1,4 @@
-// scorecard.js - Best working version with multiple options
+// scorecard.js - Uses portraits from worker
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -23,38 +23,6 @@ const RANK_NAMES = {
     4: '🪙 Member',
     5: '🔰 Trial'
 };
-
-// ============================================
-// CLASS ICONS (RELIABLE)
-// ============================================
-function getClassIcon(className) {
-    const icons = {
-        'Warrior': 'https://wow.zamimg.com/images/wow/icons/large/class_warrior.jpg',
-        'Paladin': 'https://wow.zamimg.com/images/wow/icons/large/class_paladin.jpg',
-        'Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_hunter.jpg',
-        'Rogue': 'https://wow.zamimg.com/images/wow/icons/large/class_rogue.jpg',
-        'Priest': 'https://wow.zamimg.com/images/wow/icons/large/class_priest.jpg',
-        'Death Knight': 'https://wow.zamimg.com/images/wow/icons/large/class_deathknight.jpg',
-        'Shaman': 'https://wow.zamimg.com/images/wow/icons/large/class_shaman.jpg',
-        'Mage': 'https://wow.zamimg.com/images/wow/icons/large/class_mage.jpg',
-        'Warlock': 'https://wow.zamimg.com/images/wow/icons/large/class_warlock.jpg',
-        'Monk': 'https://wow.zamimg.com/images/wow/icons/large/class_monk.jpg',
-        'Druid': 'https://wow.zamimg.com/images/wow/icons/large/class_druid.jpg',
-        'Demon Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_demonhunter.jpg',
-        'Evoker': 'https://wow.zamimg.com/images/wow/icons/large/class_evoker.jpg'
-    };
-    return icons[className] || 'https://wow.zamimg.com/images/wow/icons/large/class_default.jpg';
-}
-
-// ============================================
-// ARMORY URL
-// ============================================
-function getArmoryUrl(characterName, realm, region) {
-    if (!characterName || !realm) return null;
-    const cleanName = characterName.toLowerCase().replace(/ /g, '-');
-    const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
-    return `https://worldofwarcraft.blizzard.com/${region}/character/${cleanRealm}/${cleanName}/`;
-}
 
 // ============================================
 // FETCH GUILD DATA
@@ -99,7 +67,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        renderGuildData(data.members, data, region);
+        renderGuildData(data.members, data);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -113,7 +81,7 @@ async function fetchScorecard() {
     }
 }
 
-function renderGuildData(members, data, region) {
+function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
     document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
@@ -121,10 +89,13 @@ function renderGuildData(members, data, region) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    renderScorecards(members, region);
+    renderScorecards(members);
 }
 
-function renderScorecards(members, region = 'eu') {
+// ============================================
+// RENDER SCORECARD CARDS
+// ============================================
+function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
     
@@ -145,14 +116,23 @@ function renderScorecards(members, region = 'eu') {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        const classIcon = getClassIcon(member.class);
-        const armoryUrl = getArmoryUrl(member.name, member.realm || 'outland', region);
+        
+        // Use portrait URL from worker
+        const portraitUrl = member.portrait || null;
+        const armoryUrl = member.armory_url || null;
+        
+        // If no portrait, show class icon fallback
+        const classIconUrl = portraitUrl ? null : `https://wow.zamimg.com/images/wow/icons/large/class_${member.class?.toLowerCase() || 'default'}.jpg`;
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <img class="class-image" src="${classIcon}" alt="${member.class}" loading="lazy">
+                <img class="character-portrait" 
+                     src="${portraitUrl || classIconUrl}" 
+                     alt="${member.name}" 
+                     loading="lazy"
+                     onerror="this.style.display='none'">
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -170,7 +150,7 @@ function renderScorecards(members, region = 'eu') {
                 </div>
             </div>
             <div class="card-footer">
-                <span class="click-hint">👆 Click for details</span>
+                <span class="click-hint">👆 Click to view on Armory</span>
             </div>
         `;
         
@@ -193,4 +173,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded');
+console.log('✅ scorecard.js loaded (with portraits)');
