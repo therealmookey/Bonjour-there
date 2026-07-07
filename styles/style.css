@@ -563,3 +563,77 @@ body {
     padding-left: 10px;
     margin-bottom: 20px;
 }
+/* ============================================
+   CHARACTER IMAGES
+   ============================================ */
+.character-image-wrapper {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.character-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    object-fit: cover;
+    background: #1a1a2e;
+}
+
+.class-emoji {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: #1a1a2e;
+}
+
+.modal-image-wrapper {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.modal-image {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    object-fit: cover;
+    background: #1a1a2e;
+}
+
+.modal-emoji {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    background: #1a1a2e;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-left: 10px;
+    margin-bottom: 20px;
+}
