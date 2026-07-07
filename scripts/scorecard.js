@@ -1,4 +1,4 @@
-// scorecard.js - Works with WarcraftLogs data
+// scorecard.js - Raider.io version
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -23,14 +23,6 @@ const RANK_NAMES = {
     4: '🪙 Member',
     5: '🔰 Trial'
 };
-
-function getItemLevelColor(ilvl) {
-    if (ilvl >= 600) return '#00ff88';
-    if (ilvl >= 550) return '#ffd700';
-    if (ilvl >= 500) return '#ff8c00';
-    if (ilvl >= 450) return '#66ccff';
-    return '#aaaaaa';
-}
 
 function getCharacterAvatar(className) {
     const classIcons = {
@@ -77,7 +69,6 @@ async function fetchScorecard() {
     }
     
     try {
-        // Use the worker endpoint
         const apiUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
         console.log('📡 Fetching from worker:', apiUrl);
         
@@ -114,13 +105,6 @@ function renderGuildData(members, data) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    // Calculate average item level
-    const ilvls = members.map(m => m.item_level).filter(v => v > 0);
-    if (ilvls.length > 0) {
-        const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
-        document.getElementById('avgIlvl').textContent = `📊 Avg iLvl: ${avg}`;
-    }
-    
     renderScorecards(members);
 }
 
@@ -147,9 +131,6 @@ function renderScorecards(members) {
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
         const classAvatar = getCharacterAvatar(member.class);
         
-        const ilvlDisplay = member.item_level > 0 ? member.item_level : '—';
-        const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
-        
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
@@ -165,10 +146,6 @@ function renderScorecards(members) {
                 <div class="stat-item">
                     <div class="stat-label">Level</div>
                     <div class="stat-value">${member.level || 0}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">Item Level</div>
-                    <div class="stat-value ilvl" style="color: ${ilvlColor};">${ilvlDisplay}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Achievements</div>
@@ -195,7 +172,6 @@ function showCharacterDetails(member) {
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
     const classAvatar = getCharacterAvatar(member.class);
-    const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -216,10 +192,6 @@ function showCharacterDetails(member) {
                 <div class="modal-stat">
                     <span class="modal-stat-label">Level</span>
                     <span class="modal-stat-value">${member.level || 0}</span>
-                </div>
-                <div class="modal-stat">
-                    <span class="modal-stat-label">Item Level</span>
-                    <span class="modal-stat-value" style="color: ${ilvlColor};">${member.item_level > 0 ? member.item_level : '—'}</span>
                 </div>
                 <div class="modal-stat">
                     <span class="modal-stat-label">Achievements</span>
@@ -244,4 +216,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (WarcraftLogs version)');
+console.log('✅ scorecard.js loaded (Raider.io version)');
