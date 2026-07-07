@@ -1,4 +1,4 @@
-// scorecard.js - With portrait support
+// scorecard.js - Raider.io version with portrait support
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -41,39 +41,6 @@ function getCharacterAvatar(className) {
         'Evoker': '🐉'
     };
     return classIcons[className] || '👤';
-}
-
-// ============================================
-// GENERATE CHARACTER PORTRAIT URL
-// ============================================
-function getCharacterPortrait(characterName, realm, region) {
-    if (!characterName || !realm) return null;
-    
-    // Clean the name and realm for URL
-    const cleanName = characterName.toLowerCase()
-        .replace(/[áàâäãå]/g, 'a')
-        .replace(/[éèêë]/g, 'e')
-        .replace(/[íìîï]/g, 'i')
-        .replace(/[óòôöõ]/g, 'o')
-        .replace(/[úùûü]/g, 'u')
-        .replace(/[ç]/g, 'c')
-        .replace(/[ñ]/g, 'n')
-        .replace(/[^a-z0-9-]/g, '');
-    
-    const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
-    
-    // Try multiple patterns - the first one that works will be cached
-    const patterns = [
-        // Standard CDN pattern (most likely to work)
-        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/1/${cleanName}-avatar.jpg`,
-        // Alternative path
-        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/0/${cleanName}-avatar.jpg`,
-        // Using full name with encoding
-        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/1/${encodeURIComponent(cleanName)}-avatar.jpg`,
-    ];
-    
-    // Return the first pattern
-    return patterns[0];
 }
 
 // ============================================
@@ -145,7 +112,7 @@ function renderGuildData(members, data, region) {
 }
 
 // ============================================
-// RENDER SCORECARD CARDS (WITH PORTRAITS)
+// RENDER SCORECARD CARDS
 // ============================================
 function renderScorecards(members, region = 'eu') {
     const grid = document.getElementById('scorecardGrid');
@@ -170,10 +137,9 @@ function renderScorecards(members, region = 'eu') {
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
         const classAvatar = getCharacterAvatar(member.class);
         
-        // Try to get the character portrait
-        const portraitUrl = getCharacterPortrait(member.name, member.realm || 'outland', region);
+        // Use portrait URL from worker if available
+        const portraitUrl = member.portrait || null;
         
-        // Check if the portrait URL is valid (will try to load, fallback to class avatar on error)
         const portraitHtml = portraitUrl 
             ? `<img class="character-portrait" src="${portraitUrl}" alt="${member.name}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.class-avatar').style.display='flex';">`
             : '';
@@ -226,7 +192,7 @@ function showCharacterDetails(member, region = 'eu') {
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
     const classAvatar = getCharacterAvatar(member.class);
     
-    const portraitUrl = getCharacterPortrait(member.name, member.realm || 'outland', region);
+    const portraitUrl = member.portrait || null;
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -274,4 +240,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with portraits)');
+console.log('✅ scorecard.js loaded (Raider.io version with portraits)');
