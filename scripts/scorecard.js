@@ -1,4 +1,4 @@
-// scorecard.js - With Blizzard CDN name-based images
+// scorecard.js - With reliable class images
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -25,44 +25,27 @@ const RANK_NAMES = {
 };
 
 // ============================================
-// GENERATE CHARACTER IMAGE URL
+// CLASS IMAGES (RELIABLE CDN)
 // ============================================
-function getCharacterImageUrl(characterName, realm, region) {
-    if (!characterName || !realm) return null;
-    
-    // Clean the name: lowercase, remove accents and special chars
-    const cleanName = characterName
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove accents
-        .replace(/[^a-z0-9]/g, ''); // Remove special characters
-    
-    const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
-    
-    // Return the Blizzard CDN URL
-    return `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/1/${cleanName}-avatar.jpg`;
-}
-
-// ============================================
-// GET CLASS EMOJI (FALLBACK)
-// ============================================
-function getClassEmoji(className) {
-    const emojis = {
-        'Warrior': '⚔️',
-        'Paladin': '🛡️',
-        'Hunter': '🏹',
-        'Rogue': '🗡️',
-        'Priest': '✨',
-        'Death Knight': '💀',
-        'Shaman': '🌊',
-        'Mage': '🔮',
-        'Warlock': '👿',
-        'Monk': '🍺',
-        'Druid': '🐻',
-        'Demon Hunter': '😈',
-        'Evoker': '🐉'
+function getClassImageUrl(className) {
+    // Official WoW class icons from a reliable CDN
+    const classMap = {
+        'Warrior': 'warrior',
+        'Paladin': 'paladin',
+        'Hunter': 'hunter',
+        'Rogue': 'rogue',
+        'Priest': 'priest',
+        'Death Knight': 'deathknight',
+        'Shaman': 'shaman',
+        'Mage': 'mage',
+        'Warlock': 'warlock',
+        'Monk': 'monk',
+        'Druid': 'druid',
+        'Demon Hunter': 'demonhunter',
+        'Evoker': 'evoker'
     };
-    return emojis[className] || '👤';
+    const key = classMap[className] || 'default';
+    return `https://wow.zamimg.com/images/wow/icons/large/class_${key}.jpg`;
 }
 
 // ============================================
@@ -108,7 +91,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        renderGuildData(data.members, data, region);
+        renderGuildData(data.members, data);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -122,7 +105,7 @@ async function fetchScorecard() {
     }
 }
 
-function renderGuildData(members, data, region) {
+function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
     document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
@@ -130,13 +113,13 @@ function renderGuildData(members, data, region) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    renderScorecards(members, region);
+    renderScorecards(members);
 }
 
 // ============================================
 // RENDER SCORECARD CARDS
 // ============================================
-function renderScorecards(members, region = 'eu') {
+function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
     
@@ -157,23 +140,13 @@ function renderScorecards(members, region = 'eu') {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        
-        // Generate character image URL
-        const imageUrl = getCharacterImageUrl(member.name, member.realm || 'outland', region);
-        const classEmoji = getClassEmoji(member.class);
+        const classImage = getClassImageUrl(member.class);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <div class="character-image-wrapper">
-                    <img class="character-image" 
-                         src="${imageUrl}" 
-                         alt="${member.name}" 
-                         loading="lazy"
-                         onerror="this.style.display='none'; this.parentElement.querySelector('.class-emoji').style.display='flex';">
-                    <div class="class-emoji" style="display:none; width:48px; height:48px; border-radius:50%; border:2px solid rgba(255,215,0,0.3); align-items:center; justify-content:center; font-size:1.5rem; background:#1a1a2e;">${classEmoji}</div>
-                </div>
+                <img class="class-image" src="${classImage}" alt="${member.class}" loading="lazy">
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -196,7 +169,7 @@ function renderScorecards(members, region = 'eu') {
         `;
         
         card.addEventListener('click', function() {
-            showCharacterDetails(member, region);
+            showCharacterDetails(member);
         });
         
         grid.appendChild(card);
@@ -206,14 +179,13 @@ function renderScorecards(members, region = 'eu') {
 // ============================================
 // SHOW CHARACTER DETAILS
 // ============================================
-function showCharacterDetails(member, region = 'eu') {
+function showCharacterDetails(member) {
     const existingModal = document.querySelector('.character-modal');
     if (existingModal) existingModal.remove();
     
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-    const imageUrl = getCharacterImageUrl(member.name, member.realm || 'outland', region);
-    const classEmoji = getClassEmoji(member.class);
+    const classImage = getClassImageUrl(member.class);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -222,13 +194,7 @@ function showCharacterDetails(member, region = 'eu') {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
-                <div class="modal-image-wrapper">
-                    <img class="modal-image" 
-                         src="${imageUrl}" 
-                         alt="${member.name}"
-                         onerror="this.style.display='none'; this.parentElement.querySelector('.modal-emoji').style.display='flex';">
-                    <div class="modal-emoji" style="display:none; width:64px; height:64px; border-radius:50%; border:3px solid #ffd700; align-items:center; justify-content:center; font-size:2.5rem; background:#1a1a2e;">${classEmoji}</div>
-                </div>
+                <img class="modal-image" src="${classImage}" alt="${member.class}">
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -264,4 +230,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with Blizzard CDN images)');
+console.log('✅ scorecard.js loaded (with class images)');
