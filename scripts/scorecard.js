@@ -31,6 +31,12 @@ const RANK_NAMES = {
 console.log(`🏈 Guild Scorecard ${APP_VERSION} loaded!`);
 
 // ============================================
+// VISUAL TEST - CHANGE BACKGROUND COLOR
+// ============================================
+document.body.style.backgroundColor = '#ff4444'; // Bright red!
+console.log('🔴 RED BACKGROUND - NEW CODE IS RUNNING!');
+
+// ============================================
 // GET CLASS ICON (FALLBACK)
 // ============================================
 function getClassIcon(className) {
