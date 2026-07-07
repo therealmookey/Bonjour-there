@@ -1,4 +1,4 @@
-// scorecard.js - Raider.io version
+// scorecard.js - With portrait support
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -43,6 +43,42 @@ function getCharacterAvatar(className) {
     return classIcons[className] || '👤';
 }
 
+// ============================================
+// GENERATE CHARACTER PORTRAIT URL
+// ============================================
+function getCharacterPortrait(characterName, realm, region) {
+    if (!characterName || !realm) return null;
+    
+    // Clean the name and realm for URL
+    const cleanName = characterName.toLowerCase()
+        .replace(/[áàâäãå]/g, 'a')
+        .replace(/[éèêë]/g, 'e')
+        .replace(/[íìîï]/g, 'i')
+        .replace(/[óòôöõ]/g, 'o')
+        .replace(/[úùûü]/g, 'u')
+        .replace(/[ç]/g, 'c')
+        .replace(/[ñ]/g, 'n')
+        .replace(/[^a-z0-9-]/g, '');
+    
+    const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
+    
+    // Try multiple patterns - the first one that works will be cached
+    const patterns = [
+        // Standard CDN pattern (most likely to work)
+        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/1/${cleanName}-avatar.jpg`,
+        // Alternative path
+        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/0/${cleanName}-avatar.jpg`,
+        // Using full name with encoding
+        `https://render.worldofwarcraft.com/${region}/character/${cleanRealm}/1/${encodeURIComponent(cleanName)}-avatar.jpg`,
+    ];
+    
+    // Return the first pattern
+    return patterns[0];
+}
+
+// ============================================
+// FETCH GUILD DATA
+// ============================================
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
     
@@ -83,7 +119,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        renderGuildData(data.members, data);
+        renderGuildData(data.members, data, region);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -97,7 +133,7 @@ async function fetchScorecard() {
     }
 }
 
-function renderGuildData(members, data) {
+function renderGuildData(members, data, region) {
     members.sort((a, b) => a.rank - b.rank);
     
     document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
@@ -105,10 +141,13 @@ function renderGuildData(members, data) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    renderScorecards(members);
+    renderScorecards(members, region);
 }
 
-function renderScorecards(members) {
+// ============================================
+// RENDER SCORECARD CARDS (WITH PORTRAITS)
+// ============================================
+function renderScorecards(members, region = 'eu') {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
     
@@ -131,11 +170,22 @@ function renderScorecards(members) {
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
         const classAvatar = getCharacterAvatar(member.class);
         
+        // Try to get the character portrait
+        const portraitUrl = getCharacterPortrait(member.name, member.realm || 'outland', region);
+        
+        // Check if the portrait URL is valid (will try to load, fallback to class avatar on error)
+        const portraitHtml = portraitUrl 
+            ? `<img class="character-portrait" src="${portraitUrl}" alt="${member.name}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.class-avatar').style.display='flex';">`
+            : '';
+        
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <div class="class-avatar">${classAvatar}</div>
+                <div style="position:relative;">
+                    ${portraitHtml}
+                    <div class="class-avatar" style="${portraitUrl ? 'display:none;' : ''}">${classAvatar}</div>
+                </div>
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -158,20 +208,25 @@ function renderScorecards(members) {
         `;
         
         card.addEventListener('click', function() {
-            showCharacterDetails(member);
+            showCharacterDetails(member, region);
         });
         
         grid.appendChild(card);
     });
 }
 
-function showCharacterDetails(member) {
+// ============================================
+// SHOW CHARACTER DETAILS
+// ============================================
+function showCharacterDetails(member, region = 'eu') {
     const existingModal = document.querySelector('.character-modal');
     if (existingModal) existingModal.remove();
     
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
     const classAvatar = getCharacterAvatar(member.class);
+    
+    const portraitUrl = getCharacterPortrait(member.name, member.realm || 'outland', region);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -180,7 +235,10 @@ function showCharacterDetails(member) {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
-                <div class="modal-portrait">${classAvatar}</div>
+                <div style="position:relative;">
+                    ${portraitUrl ? `<img class="modal-portrait" src="${portraitUrl}" alt="${member.name}" onerror="this.style.display='none'; this.parentElement.querySelector('.modal-class-avatar').style.display='flex';">` : ''}
+                    <div class="modal-class-avatar" style="${portraitUrl ? 'display:none;' : ''}">${classAvatar}</div>
+                </div>
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -216,4 +274,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (Raider.io version)');
+console.log('✅ scorecard.js loaded (with portraits)');
