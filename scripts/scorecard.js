@@ -1,4 +1,4 @@
-// scorecard.js - With class icons
+// scorecard.js - With class icons and fallback
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -45,6 +45,28 @@ function getClassIconUrl(className) {
     };
     const key = classMap[className] || 'default';
     return `https://wow.zamimg.com/images/wow/icons/large/class_${key}.jpg`;
+}
+
+// ============================================
+// GET CLASS EMOJI (FALLBACK)
+// ============================================
+function getClassEmoji(className) {
+    const emojis = {
+        'Warrior': '⚔️',
+        'Paladin': '🛡️',
+        'Hunter': '🏹',
+        'Rogue': '🗡️',
+        'Priest': '✨',
+        'Death Knight': '💀',
+        'Shaman': '🌊',
+        'Mage': '🔮',
+        'Warlock': '👿',
+        'Monk': '🍺',
+        'Druid': '🐻',
+        'Demon Hunter': '😈',
+        'Evoker': '🐉'
+    };
+    return emojis[className] || '👤';
 }
 
 // ============================================
@@ -140,14 +162,20 @@ function renderScorecards(members) {
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
         
-        // Use class icon from WoWHead
+        // Class icon URL
         const classIconUrl = getClassIconUrl(member.class);
+        // Fallback emoji
+        const classEmoji = getClassEmoji(member.class);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <img class="class-icon" src="${classIconUrl}" alt="${member.class}" loading="lazy" onerror="this.style.display='none'">
+                <div class="class-icon-wrapper">
+                    <img class="class-icon" src="${classIconUrl}" alt="${member.class}" loading="lazy" 
+                         onerror="this.style.display='none'; this.parentElement.querySelector('.class-emoji-fallback').style.display='flex';">>
+                    <div class="class-emoji-fallback" style="display:none;">${classEmoji}</div>
+                </div>
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -187,6 +215,7 @@ function showCharacterDetails(member) {
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
     const classIconUrl = getClassIconUrl(member.class);
+    const classEmoji = getClassEmoji(member.class);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -195,7 +224,11 @@ function showCharacterDetails(member) {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
-                <img class="modal-icon" src="${classIconUrl}" alt="${member.class}" onerror="this.style.display='none'">
+                <div class="modal-icon-wrapper">
+                    <img class="modal-icon" src="${classIconUrl}" alt="${member.class}" 
+                         onerror="this.style.display='none'; this.parentElement.querySelector('.modal-emoji-fallback').style.display='flex';">>
+                    <div class="modal-emoji-fallback" style="display:none; width:64px; height:64px; border-radius:50%; border:3px solid #ffd700; display:flex; align-items:center; justify-content:center; font-size:2.5rem; background:#1a1a2e;">${classEmoji}</div>
+                </div>
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -231,4 +264,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with class icons)');
+console.log('✅ scorecard.js loaded (with class icons + fallback)');
