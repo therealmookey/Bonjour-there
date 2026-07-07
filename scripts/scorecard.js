@@ -1,4 +1,4 @@
-// scorecard.js - Only calls your worker, no direct Blizzard API
+// scorecard.js - Calls your worker
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -15,9 +15,6 @@ const CLASS_COLORS = {
     'Evoker': '#33937F'
 };
 
-// ============================================
-// FETCH GUILD DATA FROM YOUR WORKER
-// ============================================
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
     
@@ -30,7 +27,6 @@ async function fetchScorecard() {
         return;
     }
     
-    // Show loading
     const loading = document.getElementById('loading');
     const grid = document.getElementById('scorecardGrid');
     const errorDiv = document.getElementById('errorMessage');
@@ -45,7 +41,6 @@ async function fetchScorecard() {
     }
     
     try {
-        // Call YOUR worker (not Blizzard directly!)
         const apiUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
         console.log('📡 Fetching from worker:', apiUrl);
         
@@ -66,15 +61,12 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        // Update UI
         renderGuildData(data.members, data);
         
     } catch (error) {
         console.error('❌ Error:', error);
         showError(error.message || 'Failed to fetch guild data');
     } finally {
-        const loading = document.getElementById('loading');
-        const fetchBtn = document.getElementById('fetchBtn');
         if (loading) loading.classList.add('hidden');
         if (fetchBtn) {
             fetchBtn.disabled = false;
@@ -83,52 +75,31 @@ async function fetchScorecard() {
     }
 }
 
-// ============================================
-// RENDER GUILD DATA
-// ============================================
 function renderGuildData(members, data) {
-    // Sort by item level (highest first)
     members.sort((a, b) => (b.item_level || 0) - (a.item_level || 0));
     
-    // Update navigation
     const navGuild = document.getElementById('navGuildName');
-    if (navGuild) {
-        navGuild.textContent = data.guild || document.getElementById('guildInput').value.trim();
-    }
+    if (navGuild) navGuild.textContent = data.guild || document.getElementById('guildInput').value.trim();
     
     const navRealm = document.getElementById('navRealmName');
-    if (navRealm) {
-        navRealm.textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
-    }
+    if (navRealm) navRealm.textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
     
-    // Update stats
     const memberCount = document.getElementById('memberCount');
-    if (memberCount) {
-        memberCount.textContent = `👥 ${members.length} Members`;
-    }
+    if (memberCount) memberCount.textContent = `👥 ${members.length} Members`;
     
     const lastUpdated = document.getElementById('lastUpdated');
-    if (lastUpdated) {
-        lastUpdated.textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
-    }
+    if (lastUpdated) lastUpdated.textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    // Calculate average iLvl
     const ilvls = members.map(m => m.item_level).filter(v => v > 0);
     if (ilvls.length > 0) {
         const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
         const avgEl = document.getElementById('avgIlvl');
-        if (avgEl) {
-            avgEl.textContent = `📊 Avg iLvl: ${avg}`;
-        }
+        if (avgEl) avgEl.textContent = `📊 Avg iLvl: ${avg}`;
     }
     
-    // Render cards
     renderScorecards(members);
 }
 
-// ============================================
-// RENDER SCORECARD CARDS
-// ============================================
 function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) {
@@ -182,9 +153,6 @@ function renderScorecards(members) {
     });
 }
 
-// ============================================
-// SHOW ERROR MESSAGE
-// ============================================
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
@@ -195,9 +163,5 @@ function showError(message) {
     }
 }
 
-// ============================================
-// MAKE FUNCTION GLOBAL
-// ============================================
 window.fetchScorecard = fetchScorecard;
-
-console.log('✅ scorecard.js loaded (worker-only version)');
+console.log('✅ scorecard.js loaded (hybrid version)');
