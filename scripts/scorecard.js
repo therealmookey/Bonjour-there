@@ -1,4 +1,8 @@
-// scorecard.js - Uses portraits from worker
+// ============================================
+// VERSION - CHANGE THIS TO SEE UPDATES
+// ============================================
+const APP_VERSION = 'v2.5 - WORKING PATH';
+
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -24,11 +28,35 @@ const RANK_NAMES = {
     5: '🔰 Trial'
 };
 
+console.log(`🏈 Guild Scorecard ${APP_VERSION} loaded!`);
+
+// ============================================
+// GET CLASS ICON (FALLBACK)
+// ============================================
+function getClassIcon(className) {
+    const icons = {
+        'Warrior': 'https://wow.zamimg.com/images/wow/icons/large/class_warrior.jpg',
+        'Paladin': 'https://wow.zamimg.com/images/wow/icons/large/class_paladin.jpg',
+        'Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_hunter.jpg',
+        'Rogue': 'https://wow.zamimg.com/images/wow/icons/large/class_rogue.jpg',
+        'Priest': 'https://wow.zamimg.com/images/wow/icons/large/class_priest.jpg',
+        'Death Knight': 'https://wow.zamimg.com/images/wow/icons/large/class_deathknight.jpg',
+        'Shaman': 'https://wow.zamimg.com/images/wow/icons/large/class_shaman.jpg',
+        'Mage': 'https://wow.zamimg.com/images/wow/icons/large/class_mage.jpg',
+        'Warlock': 'https://wow.zamimg.com/images/wow/icons/large/class_warlock.jpg',
+        'Monk': 'https://wow.zamimg.com/images/wow/icons/large/class_monk.jpg',
+        'Druid': 'https://wow.zamimg.com/images/wow/icons/large/class_druid.jpg',
+        'Demon Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_demonhunter.jpg',
+        'Evoker': 'https://wow.zamimg.com/images/wow/icons/large/class_evoker.jpg'
+    };
+    return icons[className] || 'https://wow.zamimg.com/images/wow/icons/large/class_default.jpg';
+}
+
 // ============================================
 // FETCH GUILD DATA
 // ============================================
 async function fetchScorecard() {
-    console.log('🏈 fetchScorecard called!');
+    console.log(`🏈 fetchScorecard called (${APP_VERSION})`);
     
     const guildInput = document.getElementById('guildInput').value.trim();
     const realm = document.getElementById('realmInput').value.trim();
@@ -81,6 +109,9 @@ async function fetchScorecard() {
     }
 }
 
+// ============================================
+// RENDER GUILD DATA
+// ============================================
 function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
@@ -88,6 +119,33 @@ function renderGuildData(members, data) {
     document.getElementById('navRealmName').textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
+    
+    // ============================================
+    // VERSION BANNER - Visible confirmation of update
+    // ============================================
+    const existingBanner = document.getElementById('versionBanner');
+    if (existingBanner) existingBanner.remove();
+    
+    const versionDisplay = document.createElement('div');
+    versionDisplay.id = 'versionBanner';
+    versionDisplay.style.cssText = `
+        text-align: center;
+        color: #ffd700;
+        font-size: 0.9rem;
+        padding: 8px;
+        margin: 10px 0 15px 0;
+        border: 2px solid #ffd700;
+        border-radius: 8px;
+        background: #1a1a2e;
+        font-weight: bold;
+        letter-spacing: 1px;
+    `;
+    versionDisplay.textContent = `🏈 Guild Scorecard ${APP_VERSION} ✅`;
+    
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        controls.parentNode.insertBefore(versionDisplay, controls.nextSibling);
+    }
     
     renderScorecards(members);
 }
@@ -117,19 +175,17 @@ function renderScorecards(members) {
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
         
-        // Use portrait URL from worker
+        // Use portrait URL from worker if available, otherwise fallback to class icon
         const portraitUrl = member.portrait || null;
-        const armoryUrl = member.armory_url || null;
-        
-        // If no portrait, show class icon fallback
-        const classIconUrl = portraitUrl ? null : `https://wow.zamimg.com/images/wow/icons/large/class_${member.class?.toLowerCase() || 'default'}.jpg`;
+        const classIconUrl = getClassIcon(member.class);
+        const imageUrl = portraitUrl || classIconUrl;
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <img class="character-portrait" 
-                     src="${portraitUrl || classIconUrl}" 
+                <img class="character-image" 
+                     src="${imageUrl}" 
                      alt="${member.name}" 
                      loading="lazy"
                      onerror="this.style.display='none'">
@@ -150,13 +206,22 @@ function renderScorecards(members) {
                 </div>
             </div>
             <div class="card-footer">
-                <span class="click-hint">👆 Click to view on Armory</span>
+                <span class="click-hint">👆 Click for details</span>
             </div>
         `;
         
+        // Click to open armory
         card.addEventListener('click', function() {
+            const armoryUrl = member.armory_url || null;
             if (armoryUrl) {
                 window.open(armoryUrl, '_blank');
+            } else {
+                const name = member.name || 'Unknown';
+                const realm = member.realm || 'outland';
+                const region = 'eu';
+                const cleanName = name.toLowerCase().replace(/ /g, '-');
+                const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
+                window.open(`https://worldofwarcraft.blizzard.com/${region}/character/${cleanRealm}/${cleanName}/`, '_blank');
             }
         });
         
@@ -164,6 +229,9 @@ function renderScorecards(members) {
     });
 }
 
+// ============================================
+// SHOW ERROR
+// ============================================
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
@@ -172,5 +240,9 @@ function showError(message) {
     }
 }
 
+// ============================================
+// MAKE FUNCTION GLOBAL
+// ============================================
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with portraits)');
+
+console.log(`✅ scorecard.js loaded (${APP_VERSION})`);
