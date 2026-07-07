@@ -1,4 +1,4 @@
-// scorecard.js - With character portraits
+// scorecard.js - With class avatars
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -16,7 +16,7 @@ const CLASS_COLORS = {
 };
 
 // ============================================
-// RANK NAMES MAPPING
+// RANK NAMES
 // ============================================
 const RANK_NAMES = {
     0: '👑 Guild Master',
@@ -28,26 +28,25 @@ const RANK_NAMES = {
 };
 
 // ============================================
-// ITEM LEVEL COLORS
+// CLASS AVATARS
 // ============================================
-function getItemLevelColor(ilvl) {
-    if (ilvl >= 600) return '#00ff88';
-    if (ilvl >= 550) return '#ffd700';
-    if (ilvl >= 500) return '#ff8c00';
-    if (ilvl >= 450) return '#66ccff';
-    return '#aaaaaa';
-}
-
-// ============================================
-// GENERATE CHARACTER PORTRAIT URL
-// ============================================
-function getCharacterPortrait(thumbnail, region) {
-    if (!thumbnail) return null;
-    // thumbnail format: "realmSlug/folder/avatar-id-avatar.jpg"
-    // Example: "outland/5/123456789-avatar.jpg"
-    // Remove the "-avatar.jpg" part to get the base path, then add -inset.jpg for a better portrait
-    const basePath = thumbnail.replace('-avatar.jpg', '');
-    return `https://render.worldofwarcraft.com/${region}/character/${basePath}-inset.jpg`;
+function getCharacterAvatar(className) {
+    const classIcons = {
+        'Warrior': '⚔️',
+        'Paladin': '🛡️',
+        'Hunter': '🏹',
+        'Rogue': '🗡️',
+        'Priest': '✨',
+        'Death Knight': '💀',
+        'Shaman': '🌊',
+        'Mage': '🔮',
+        'Warlock': '👿',
+        'Monk': '🍺',
+        'Druid': '🐻',
+        'Demon Hunter': '😈',
+        'Evoker': '🐉'
+    };
+    return classIcons[className] || '👤';
 }
 
 // ============================================
@@ -65,7 +64,6 @@ async function fetchScorecard() {
         return;
     }
     
-    // Show loading
     const loading = document.getElementById('loading');
     const grid = document.getElementById('scorecardGrid');
     const errorDiv = document.getElementById('errorMessage');
@@ -80,7 +78,6 @@ async function fetchScorecard() {
     }
     
     try {
-        // Fetch from your worker
         const apiUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
         console.log('📡 Fetching from worker:', apiUrl);
         
@@ -95,8 +92,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        // Update UI
-        renderGuildData(data.members, data, region);
+        renderGuildData(data.members, data);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -113,45 +109,23 @@ async function fetchScorecard() {
 // ============================================
 // RENDER GUILD DATA
 // ============================================
-function renderGuildData(members, data, region) {
-    // Sort by rank (0 is highest)
+function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
-    // Update navigation
-    const navGuild = document.getElementById('navGuildName');
-    if (navGuild) navGuild.textContent = data.guild || document.getElementById('guildInput').value.trim();
+    document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
+    document.getElementById('navRealmName').textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
+    document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
+    document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    const navRealm = document.getElementById('navRealmName');
-    if (navRealm) navRealm.textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
-    
-    // Update stats
-    const memberCount = document.getElementById('memberCount');
-    if (memberCount) memberCount.textContent = `👥 ${members.length} Members`;
-    
-    const lastUpdated = document.getElementById('lastUpdated');
-    if (lastUpdated) lastUpdated.textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
-    
-    // Calculate average iLvl (if available)
-    const ilvls = members.map(m => m.item_level).filter(v => v > 0);
-    if (ilvls.length > 0) {
-        const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
-        const avgEl = document.getElementById('avgIlvl');
-        if (avgEl) avgEl.textContent = `📊 Avg iLvl: ${avg}`;
-    }
-    
-    // Render cards
-    renderScorecards(members, region);
+    renderScorecards(members);
 }
 
 // ============================================
-// RENDER SCORECARD CARDS (with portraits)
+// RENDER SCORECARD CARDS
 // ============================================
-function renderScorecards(members, region = 'eu') {
+function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
-    if (!grid) {
-        console.error('❌ scorecardGrid element not found!');
-        return;
-    }
+    if (!grid) return;
     
     grid.innerHTML = '';
     
@@ -167,27 +141,16 @@ function renderScorecards(members, region = 'eu') {
         else if (index === 1) card.classList.add('top-2');
         else if (index === 2) card.classList.add('top-3');
         
-        // Rank name
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
-        
-        // Item level
-        const ilvlDisplay = member.item_level > 0 ? member.item_level : '—';
-        const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
-        
-        // Class color
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        
-        // ============================================
-        // GENERATE PORTRAIT URL
-        // ============================================
-        const portraitUrl = getCharacterPortrait(member.thumbnail, region);
+        const classAvatar = getCharacterAvatar(member.class);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                ${portraitUrl ? `<img class="character-portrait" src="${portraitUrl}" alt="${member.name}" loading="lazy">` : ''}
+                <div class="class-avatar">${classAvatar}</div>
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -200,10 +163,6 @@ function renderScorecards(members, region = 'eu') {
                     <div class="stat-value">${member.level || 0}</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">Item Level</div>
-                    <div class="stat-value ilvl" style="color: ${ilvlColor};">${ilvlDisplay}</div>
-                </div>
-                <div class="stat-item">
                     <div class="stat-label">Achievements</div>
                     <div class="stat-value">${(member.achievement_points || 0).toLocaleString()}</div>
                 </div>
@@ -213,9 +172,8 @@ function renderScorecards(members, region = 'eu') {
             </div>
         `;
         
-        // Click event for character details
         card.addEventListener('click', function() {
-            showCharacterDetails(member, region);
+            showCharacterDetails(member);
         });
         
         grid.appendChild(card);
@@ -223,17 +181,15 @@ function renderScorecards(members, region = 'eu') {
 }
 
 // ============================================
-// SHOW CHARACTER DETAILS (with portrait)
+// SHOW CHARACTER DETAILS
 // ============================================
-function showCharacterDetails(member, region = 'eu') {
-    // Remove existing modal if any
+function showCharacterDetails(member) {
     const existingModal = document.querySelector('.character-modal');
     if (existingModal) existingModal.remove();
     
-    const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-    const portraitUrl = getCharacterPortrait(member.thumbnail, region);
+    const classAvatar = getCharacterAvatar(member.class);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -242,7 +198,7 @@ function showCharacterDetails(member, region = 'eu') {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
-                ${portraitUrl ? `<img class="modal-portrait" src="${portraitUrl}" alt="${member.name}">` : ''}
+                <div class="modal-portrait">${classAvatar}</div>
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -256,11 +212,7 @@ function showCharacterDetails(member, region = 'eu') {
                     <span class="modal-stat-value">${member.level || 0}</span>
                 </div>
                 <div class="modal-stat">
-                    <span class="modal-stat-label">Item Level</span>
-                    <span class="modal-stat-value" style="color: ${ilvlColor};">${member.item_level > 0 ? member.item_level : '—'}</span>
-                </div>
-                <div class="modal-stat">
-                    <span class="modal-stat-label">Achievement Points</span>
+                    <span class="modal-stat-label">Achievements</span>
                     <span class="modal-stat-value">${(member.achievement_points || 0).toLocaleString()}</span>
                 </div>
             </div>
@@ -273,22 +225,13 @@ function showCharacterDetails(member, region = 'eu') {
     document.body.appendChild(modal);
 }
 
-// ============================================
-// SHOW ERROR
-// ============================================
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
         errorDiv.textContent = '❌ ' + message;
         errorDiv.classList.remove('hidden');
-    } else {
-        console.error('❌ Error:', message);
     }
 }
 
-// ============================================
-// MAKE FUNCTION GLOBAL
-// ============================================
 window.fetchScorecard = fetchScorecard;
-
-console.log('✅ scorecard.js loaded (with portraits)');
+console.log('✅ scorecard.js loaded (Raider.io version)');
