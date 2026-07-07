@@ -1,13 +1,7 @@
-// ============================================
-// VERSION - CHANGE THIS TO SEE UPDATES
-// ============================================
-const APP_VERSION = 'v2.8 - PAGES DEPLOY';
+// scorecard.js - v3.1 FINAL
+const APP_VERSION = 'v3.1 - FINAL';
 
-// ============================================
-// VISUAL TEST - RED BACKGROUND
-// ============================================
-document.body.style.backgroundColor = '#ff4444'; // Bright red!
-console.log('🔴 RED BACKGROUND - NEW CODE IS RUNNING!');
+console.log(`🏈 Guild Scorecard ${APP_VERSION} loaded!`);
 
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
@@ -34,11 +28,6 @@ const RANK_NAMES = {
     5: '🔰 Trial'
 };
 
-console.log(`🏈 Guild Scorecard ${APP_VERSION} loaded!`);
-
-// ============================================
-// GET CLASS ICON (FALLBACK)
-// ============================================
 function getClassIcon(className) {
     const icons = {
         'Warrior': 'https://wow.zamimg.com/images/wow/icons/large/class_warrior.jpg',
@@ -58,9 +47,6 @@ function getClassIcon(className) {
     return icons[className] || 'https://wow.zamimg.com/images/wow/icons/large/class_default.jpg';
 }
 
-// ============================================
-// FETCH GUILD DATA
-// ============================================
 async function fetchScorecard() {
     console.log(`🏈 fetchScorecard called (${APP_VERSION})`);
     
@@ -87,16 +73,16 @@ async function fetchScorecard() {
     }
     
     try {
-        const apiUrl = `https://bonjourthere2.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
-        console.log('📡 Fetching from worker:', apiUrl);
+        const apiUrl = `/api?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
+        console.log('📡 Fetching from API:', apiUrl);
         
         const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error(`Worker error: ${response.status}`);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
         
         const data = await response.json();
-        console.log('📊 Worker response:', data);
+        console.log('📊 API response:', data);
         
-        if (!data.success) throw new Error(data.error || 'Worker returned error');
+        if (!data.success) throw new Error(data.error || 'API returned error');
         if (!data.members || data.members.length === 0) {
             throw new Error('No members found');
         }
@@ -115,9 +101,6 @@ async function fetchScorecard() {
     }
 }
 
-// ============================================
-// RENDER GUILD DATA
-// ============================================
 function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
@@ -156,9 +139,6 @@ function renderGuildData(members, data) {
     renderScorecards(members);
 }
 
-// ============================================
-// RENDER SCORECARD CARDS
-// ============================================
 function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
@@ -180,21 +160,16 @@ function renderScorecards(members) {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        
-        // Use portrait URL from worker if available, otherwise fallback to class icon
-        const portraitUrl = member.portrait || null;
         const classIconUrl = getClassIcon(member.class);
-        const imageUrl = portraitUrl || classIconUrl;
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
                 <img class="character-image" 
-                     src="${imageUrl}" 
-                     alt="${member.name}" 
-                     loading="lazy"
-                     onerror="this.style.display='none'">
+                     src="${classIconUrl}" 
+                     alt="${member.class}" 
+                     loading="lazy">
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -216,28 +191,10 @@ function renderScorecards(members) {
             </div>
         `;
         
-        // Click to open armory
-        card.addEventListener('click', function() {
-            const armoryUrl = member.armory_url || null;
-            if (armoryUrl) {
-                window.open(armoryUrl, '_blank');
-            } else {
-                const name = member.name || 'Unknown';
-                const realm = member.realm || 'outland';
-                const region = 'eu';
-                const cleanName = name.toLowerCase().replace(/ /g, '-');
-                const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
-                window.open(`https://worldofwarcraft.blizzard.com/${region}/character/${cleanRealm}/${cleanName}/`, '_blank');
-            }
-        });
-        
         grid.appendChild(card);
     });
 }
 
-// ============================================
-// SHOW ERROR
-// ============================================
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
@@ -246,9 +203,5 @@ function showError(message) {
     }
 }
 
-// ============================================
-// MAKE FUNCTION GLOBAL
-// ============================================
 window.fetchScorecard = fetchScorecard;
-
 console.log(`✅ scorecard.js loaded (${APP_VERSION})`);
