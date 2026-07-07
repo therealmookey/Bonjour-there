@@ -451,3 +451,41 @@ body {
     color: #5a5a7a;
     letter-spacing: 0.5px;
 }
+/* ============================================
+   CLASS ICONS
+   ============================================ */
+.class-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #1a1a2e;
+}
+
+.modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #1a1a2e;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-left: 10px;
+    margin-bottom: 20px;
+}

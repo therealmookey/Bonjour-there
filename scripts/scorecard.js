@@ -1,4 +1,4 @@
-// scorecard.js - Raider.io version with portrait support
+// scorecard.js - With class icons
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -24,23 +24,27 @@ const RANK_NAMES = {
     5: '🔰 Trial'
 };
 
-function getCharacterAvatar(className) {
-    const classIcons = {
-        'Warrior': '⚔️',
-        'Paladin': '🛡️',
-        'Hunter': '🏹',
-        'Rogue': '🗡️',
-        'Priest': '✨',
-        'Death Knight': '💀',
-        'Shaman': '🌊',
-        'Mage': '🔮',
-        'Warlock': '👿',
-        'Monk': '🍺',
-        'Druid': '🐻',
-        'Demon Hunter': '😈',
-        'Evoker': '🐉'
+// ============================================
+// GET CLASS ICON URL
+// ============================================
+function getClassIconUrl(className) {
+    const classMap = {
+        'Warrior': 'warrior',
+        'Paladin': 'paladin',
+        'Hunter': 'hunter',
+        'Rogue': 'rogue',
+        'Priest': 'priest',
+        'Death Knight': 'deathknight',
+        'Shaman': 'shaman',
+        'Mage': 'mage',
+        'Warlock': 'warlock',
+        'Monk': 'monk',
+        'Druid': 'druid',
+        'Demon Hunter': 'demonhunter',
+        'Evoker': 'evoker'
     };
-    return classIcons[className] || '👤';
+    const key = classMap[className] || 'default';
+    return `https://wow.zamimg.com/images/wow/icons/large/class_${key}.jpg`;
 }
 
 // ============================================
@@ -86,7 +90,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        renderGuildData(data.members, data, region);
+        renderGuildData(data.members, data);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -100,7 +104,7 @@ async function fetchScorecard() {
     }
 }
 
-function renderGuildData(members, data, region) {
+function renderGuildData(members, data) {
     members.sort((a, b) => a.rank - b.rank);
     
     document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
@@ -108,13 +112,13 @@ function renderGuildData(members, data, region) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    renderScorecards(members, region);
+    renderScorecards(members);
 }
 
 // ============================================
 // RENDER SCORECARD CARDS
 // ============================================
-function renderScorecards(members, region = 'eu') {
+function renderScorecards(members) {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
     
@@ -135,23 +139,15 @@ function renderScorecards(members, region = 'eu') {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        const classAvatar = getCharacterAvatar(member.class);
         
-        // Use portrait URL from worker if available
-        const portraitUrl = member.portrait || null;
-        
-        const portraitHtml = portraitUrl 
-            ? `<img class="character-portrait" src="${portraitUrl}" alt="${member.name}" loading="lazy" onerror="this.style.display='none'; this.parentElement.querySelector('.class-avatar').style.display='flex';">`
-            : '';
+        // Use class icon from WoWHead
+        const classIconUrl = getClassIconUrl(member.class);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <div style="position:relative;">
-                    ${portraitHtml}
-                    <div class="class-avatar" style="${portraitUrl ? 'display:none;' : ''}">${classAvatar}</div>
-                </div>
+                <img class="class-icon" src="${classIconUrl}" alt="${member.class}" loading="lazy" onerror="this.style.display='none'">
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -174,7 +170,7 @@ function renderScorecards(members, region = 'eu') {
         `;
         
         card.addEventListener('click', function() {
-            showCharacterDetails(member, region);
+            showCharacterDetails(member);
         });
         
         grid.appendChild(card);
@@ -184,15 +180,13 @@ function renderScorecards(members, region = 'eu') {
 // ============================================
 // SHOW CHARACTER DETAILS
 // ============================================
-function showCharacterDetails(member, region = 'eu') {
+function showCharacterDetails(member) {
     const existingModal = document.querySelector('.character-modal');
     if (existingModal) existingModal.remove();
     
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-    const classAvatar = getCharacterAvatar(member.class);
-    
-    const portraitUrl = member.portrait || null;
+    const classIconUrl = getClassIconUrl(member.class);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -201,10 +195,7 @@ function showCharacterDetails(member, region = 'eu') {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
-                <div style="position:relative;">
-                    ${portraitUrl ? `<img class="modal-portrait" src="${portraitUrl}" alt="${member.name}" onerror="this.style.display='none'; this.parentElement.querySelector('.modal-class-avatar').style.display='flex';">` : ''}
-                    <div class="modal-class-avatar" style="${portraitUrl ? 'display:none;' : ''}">${classAvatar}</div>
-                </div>
+                <img class="modal-icon" src="${classIconUrl}" alt="${member.class}" onerror="this.style.display='none'">
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -240,4 +231,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (Raider.io version with portraits)');
+console.log('✅ scorecard.js loaded (with class icons)');
