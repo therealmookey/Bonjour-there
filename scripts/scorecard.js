@@ -1,4 +1,4 @@
-// scorecard.js - Opens armory page for portraits
+// scorecard.js - Best working version with multiple options
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -25,7 +25,29 @@ const RANK_NAMES = {
 };
 
 // ============================================
-// GENERATE ARMORY URL
+// CLASS ICONS (RELIABLE)
+// ============================================
+function getClassIcon(className) {
+    const icons = {
+        'Warrior': 'https://wow.zamimg.com/images/wow/icons/large/class_warrior.jpg',
+        'Paladin': 'https://wow.zamimg.com/images/wow/icons/large/class_paladin.jpg',
+        'Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_hunter.jpg',
+        'Rogue': 'https://wow.zamimg.com/images/wow/icons/large/class_rogue.jpg',
+        'Priest': 'https://wow.zamimg.com/images/wow/icons/large/class_priest.jpg',
+        'Death Knight': 'https://wow.zamimg.com/images/wow/icons/large/class_deathknight.jpg',
+        'Shaman': 'https://wow.zamimg.com/images/wow/icons/large/class_shaman.jpg',
+        'Mage': 'https://wow.zamimg.com/images/wow/icons/large/class_mage.jpg',
+        'Warlock': 'https://wow.zamimg.com/images/wow/icons/large/class_warlock.jpg',
+        'Monk': 'https://wow.zamimg.com/images/wow/icons/large/class_monk.jpg',
+        'Druid': 'https://wow.zamimg.com/images/wow/icons/large/class_druid.jpg',
+        'Demon Hunter': 'https://wow.zamimg.com/images/wow/icons/large/class_demonhunter.jpg',
+        'Evoker': 'https://wow.zamimg.com/images/wow/icons/large/class_evoker.jpg'
+    };
+    return icons[className] || 'https://wow.zamimg.com/images/wow/icons/large/class_default.jpg';
+}
+
+// ============================================
+// ARMORY URL
 // ============================================
 function getArmoryUrl(characterName, realm, region) {
     if (!characterName || !realm) return null;
@@ -102,9 +124,6 @@ function renderGuildData(members, data, region) {
     renderScorecards(members, region);
 }
 
-// ============================================
-// RENDER SCORECARD CARDS
-// ============================================
 function renderScorecards(members, region = 'eu') {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
@@ -126,15 +145,14 @@ function renderScorecards(members, region = 'eu') {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
+        const classIcon = getClassIcon(member.class);
         const armoryUrl = getArmoryUrl(member.name, member.realm || 'outland', region);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <div class="character-avatar" style="background: ${classColor};">
-                    ${member.name ? member.name.charAt(0).toUpperCase() : '?'}
-                </div>
+                <img class="class-image" src="${classIcon}" alt="${member.class}" loading="lazy">
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -152,7 +170,7 @@ function renderScorecards(members, region = 'eu') {
                 </div>
             </div>
             <div class="card-footer">
-                <span class="click-hint">👆 Click to view on Armory</span>
+                <span class="click-hint">👆 Click for details</span>
             </div>
         `;
         
@@ -175,4 +193,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with armory links)');
+console.log('✅ scorecard.js loaded');
