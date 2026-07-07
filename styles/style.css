@@ -388,3 +388,66 @@ body {
         flex-wrap: wrap;
     }
 }
+/* ============================================
+   CHARACTER PORTRAITS
+   ============================================ */
+.character-portrait {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-left: 10px;
+}
+
+/* Modal portrait */
+.modal-portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-left: 10px;
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   CLICKABLE CARDS
+   ============================================ */
+.player-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.player-card.clickable:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: 0 12px 40px rgba(255, 215, 0, 0.2);
+}
+
+.card-footer {
+    padding: 8px 10px 0 10px;
+    text-align: right;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 10px;
+}
+
+.click-hint {
+    font-size: 0.7rem;
+    color: #5a5a7a;
+    letter-spacing: 0.5px;
+}

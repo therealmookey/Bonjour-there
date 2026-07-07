@@ -1,4 +1,4 @@
-// scorecard.js - Complete with item level colors, raid progression, and clickable cards
+// scorecard.js - With character portraits
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -31,15 +31,27 @@ const RANK_NAMES = {
 // ITEM LEVEL COLORS
 // ============================================
 function getItemLevelColor(ilvl) {
-    if (ilvl >= 290) return '#00ff88'; // Legendary
-    if (ilvl >= 280) return '#ffd700'; // Epic
-    if (ilvl >= 270) return '#ff8c00'; // Rare
-    if (ilvl >= 260) return '#66ccff'; // Uncommon
-    return '#aaaaaa'; // Common
+    if (ilvl >= 600) return '#00ff88';
+    if (ilvl >= 550) return '#ffd700';
+    if (ilvl >= 500) return '#ff8c00';
+    if (ilvl >= 450) return '#66ccff';
+    return '#aaaaaa';
 }
 
 // ============================================
-// FETCH GUILD DATA (Roster + Progression)
+// GENERATE CHARACTER PORTRAIT URL
+// ============================================
+function getCharacterPortrait(thumbnail, region) {
+    if (!thumbnail) return null;
+    // thumbnail format: "realmSlug/folder/avatar-id-avatar.jpg"
+    // Example: "outland/5/123456789-avatar.jpg"
+    // Remove the "-avatar.jpg" part to get the base path, then add -inset.jpg for a better portrait
+    const basePath = thumbnail.replace('-avatar.jpg', '');
+    return `https://render.worldofwarcraft.com/${region}/character/${basePath}-inset.jpg`;
+}
+
+// ============================================
+// FETCH GUILD DATA
 // ============================================
 async function fetchScorecard() {
     console.log('🏈 fetchScorecard called!');
@@ -68,63 +80,23 @@ async function fetchScorecard() {
     }
     
     try {
-        // ============================================
-        // FETCH ROSTER FROM RAIDER.IO
-        // ============================================
-        const rosterUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
-        console.log('📡 Fetching roster:', rosterUrl);
+        // Fetch from your worker
+        const apiUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
+        console.log('📡 Fetching from worker:', apiUrl);
         
-        const rosterResponse = await fetch(rosterUrl);
-        if (!rosterResponse.ok) throw new Error(`Roster error: ${rosterResponse.status}`);
-        const rosterData = await rosterResponse.json();
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`Worker error: ${response.status}`);
         
-        if (!rosterData.success) throw new Error(rosterData.error || 'Roster fetch failed');
-        if (!rosterData.members || rosterData.members.length === 0) {
+        const data = await response.json();
+        console.log('📊 Worker response:', data);
+        
+        if (!data.success) throw new Error(data.error || 'Worker returned error');
+        if (!data.members || data.members.length === 0) {
             throw new Error('No members found');
         }
         
-        // ============================================
-        // FETCH RAID PROGRESSION (optional)
-        // ============================================
-        let progressionData = null;
-        try {
-            const progUrl = `https://guild-api.mikeyvandamme.workers.dev/progression?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
-            console.log('📡 Fetching progression:', progUrl);
-            
-            const progResponse = await fetch(progUrl);
-            if (progResponse.ok) {
-                const progResult = await progResponse.json();
-                if (progResult.success) {
-                    progressionData = progResult.progression;
-                    console.log('✅ Progression data loaded');
-                }
-            }
-        } catch (e) {
-            console.warn('⚠️ Progression not available:', e.message);
-        }
-        
-        // ============================================
-        // UPDATE UI
-        // ============================================
-        // Navigation
-        document.getElementById('navGuildName').textContent = rosterData.guild || guildInput;
-        document.getElementById('navRealmName').textContent = (rosterData.realm || realm).toUpperCase();
-        
-        // Stats
-        document.getElementById('memberCount').textContent = `👥 ${rosterData.members.length} Members`;
-        document.getElementById('lastUpdated').textContent = `🔄 ${rosterData.updated || new Date().toLocaleString()}`;
-        
-        // Average iLvl
-        const ilvls = rosterData.members.map(m => m.item_level).filter(v => v > 0);
-        if (ilvls.length > 0) {
-            const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
-            document.getElementById('avgIlvl').textContent = `📊 Avg iLvl: ${avg}`;
-        }
-        
-        // ============================================
-        // RENDER SCORECARD WITH ALL FEATURES
-        // ============================================
-        renderScorecards(rosterData.members, progressionData);
+        // Update UI
+        renderGuildData(data.members, data, region);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -139,9 +111,42 @@ async function fetchScorecard() {
 }
 
 // ============================================
-// RENDER SCORECARD CARDS (With Progression)
+// RENDER GUILD DATA
 // ============================================
-function renderScorecards(members, progressionData) {
+function renderGuildData(members, data, region) {
+    // Sort by rank (0 is highest)
+    members.sort((a, b) => a.rank - b.rank);
+    
+    // Update navigation
+    const navGuild = document.getElementById('navGuildName');
+    if (navGuild) navGuild.textContent = data.guild || document.getElementById('guildInput').value.trim();
+    
+    const navRealm = document.getElementById('navRealmName');
+    if (navRealm) navRealm.textContent = (data.realm || document.getElementById('realmInput').value.trim()).toUpperCase();
+    
+    // Update stats
+    const memberCount = document.getElementById('memberCount');
+    if (memberCount) memberCount.textContent = `👥 ${members.length} Members`;
+    
+    const lastUpdated = document.getElementById('lastUpdated');
+    if (lastUpdated) lastUpdated.textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
+    
+    // Calculate average iLvl (if available)
+    const ilvls = members.map(m => m.item_level).filter(v => v > 0);
+    if (ilvls.length > 0) {
+        const avg = (ilvls.reduce((a, b) => a + b, 0) / ilvls.length).toFixed(1);
+        const avgEl = document.getElementById('avgIlvl');
+        if (avgEl) avgEl.textContent = `📊 Avg iLvl: ${avg}`;
+    }
+    
+    // Render cards
+    renderScorecards(members, region);
+}
+
+// ============================================
+// RENDER SCORECARD CARDS (with portraits)
+// ============================================
+function renderScorecards(members, region = 'eu') {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) {
         console.error('❌ scorecardGrid element not found!');
@@ -155,19 +160,6 @@ function renderScorecards(members, progressionData) {
         return;
     }
     
-    // ============================================
-    // PROGRESSION BANNER (if available)
-    // ============================================
-    if (progressionData) {
-        const banner = document.createElement('div');
-        banner.className = 'progression-banner';
-        banner.innerHTML = buildProgressionHTML(progressionData);
-        grid.appendChild(banner);
-    }
-    
-    // ============================================
-    // MEMBER CARDS
-    // ============================================
     members.forEach((member, index) => {
         const card = document.createElement('div');
         card.className = 'player-card clickable';
@@ -179,16 +171,23 @@ function renderScorecards(members, progressionData) {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         
-        // Item level with color
-        const ilvlDisplay = member.item_level > 0 ? member.item_level : 'N/A';
+        // Item level
+        const ilvlDisplay = member.item_level > 0 ? member.item_level : '—';
         const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
         
+        // Class color
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
+        
+        // ============================================
+        // GENERATE PORTRAIT URL
+        // ============================================
+        const portraitUrl = getCharacterPortrait(member.thumbnail, region);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
+                ${portraitUrl ? `<img class="character-portrait" src="${portraitUrl}" alt="${member.name}" loading="lazy">` : ''}
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -202,9 +201,7 @@ function renderScorecards(members, progressionData) {
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Item Level</div>
-                    <div class="stat-value ilvl" style="color: ${ilvlColor};">
-                        ${ilvlDisplay}
-                    </div>
+                    <div class="stat-value ilvl" style="color: ${ilvlColor};">${ilvlDisplay}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Achievements</div>
@@ -216,11 +213,9 @@ function renderScorecards(members, progressionData) {
             </div>
         `;
         
-        // ============================================
-        // CLICK EVENT - Show character details
-        // ============================================
+        // Click event for character details
         card.addEventListener('click', function() {
-            showCharacterDetails(member);
+            showCharacterDetails(member, region);
         });
         
         grid.appendChild(card);
@@ -228,46 +223,9 @@ function renderScorecards(members, progressionData) {
 }
 
 // ============================================
-// BUILD PROGRESSION HTML
+// SHOW CHARACTER DETAILS (with portrait)
 // ============================================
-function buildProgressionHTML(progression) {
-    if (!progression) return '';
-    
-    let html = '<div class="progression-header">🏆 RAID PROGRESSION</div><div class="progression-content">';
-    
-    // Find the latest expansion
-    const expansions = progression.expansions || [];
-    if (expansions.length === 0) {
-        return '<div class="progression-content">No progression data available</div>';
-    }
-    
-    // Show the most recent expansion first
-    const latestExpansion = expansions[expansions.length - 1];
-    html += `<div class="progression-expansion">${latestExpansion.expansion}</div>`;
-    
-    const raids = latestExpansion.raids || [];
-    raids.forEach(raid => {
-        const bossCount = raid.bosses?.length || 0;
-        const kills = raid.bosses?.filter(b => b.kills > 0).length || 0;
-        const difficulty = raid.difficulty || 'Normal';
-        
-        html += `
-            <div class="progression-raid">
-                <span class="progression-raid-name">${raid.name}</span>
-                <span class="progression-raid-diff">${difficulty}</span>
-                <span class="progression-raid-progress">${kills}/${bossCount}</span>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    return html;
-}
-
-// ============================================
-// SHOW CHARACTER DETAILS (Modal)
-// ============================================
-function showCharacterDetails(member) {
+function showCharacterDetails(member, region = 'eu') {
     // Remove existing modal if any
     const existingModal = document.querySelector('.character-modal');
     if (existingModal) existingModal.remove();
@@ -275,6 +233,7 @@ function showCharacterDetails(member) {
     const ilvlColor = member.item_level > 0 ? getItemLevelColor(member.item_level) : '#666';
     const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
     const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
+    const portraitUrl = getCharacterPortrait(member.thumbnail, region);
     
     const modal = document.createElement('div');
     modal.className = 'character-modal';
@@ -283,6 +242,7 @@ function showCharacterDetails(member) {
         <div class="modal-content">
             <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
             <div class="modal-header">
+                ${portraitUrl ? `<img class="modal-portrait" src="${portraitUrl}" alt="${member.name}">` : ''}
                 <div class="modal-class-indicator" style="background: ${classColor};"></div>
                 <div>
                     <h2>${member.name}</h2>
@@ -297,7 +257,7 @@ function showCharacterDetails(member) {
                 </div>
                 <div class="modal-stat">
                     <span class="modal-stat-label">Item Level</span>
-                    <span class="modal-stat-value" style="color: ${ilvlColor};">${member.item_level > 0 ? member.item_level : 'N/A'}</span>
+                    <span class="modal-stat-value" style="color: ${ilvlColor};">${member.item_level > 0 ? member.item_level : '—'}</span>
                 </div>
                 <div class="modal-stat">
                     <span class="modal-stat-label">Achievement Points</span>
@@ -331,4 +291,4 @@ function showError(message) {
 // ============================================
 window.fetchScorecard = fetchScorecard;
 
-console.log('✅ scorecard.js loaded (full features)');
+console.log('✅ scorecard.js loaded (with portraits)');
