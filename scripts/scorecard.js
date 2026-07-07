@@ -1,7 +1,13 @@
 // ============================================
 // VERSION - CHANGE THIS TO SEE UPDATES
 // ============================================
-const APP_VERSION = 'v2.5 - WORKING PATH';
+const APP_VERSION = 'v2.8 - PAGES DEPLOY';
+
+// ============================================
+// VISUAL TEST - RED BACKGROUND
+// ============================================
+document.body.style.backgroundColor = '#ff4444'; // Bright red!
+console.log('🔴 RED BACKGROUND - NEW CODE IS RUNNING!');
 
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
@@ -29,12 +35,6 @@ const RANK_NAMES = {
 };
 
 console.log(`🏈 Guild Scorecard ${APP_VERSION} loaded!`);
-
-// ============================================
-// VISUAL TEST - CHANGE BACKGROUND COLOR
-// ============================================
-document.body.style.backgroundColor = '#ff4444'; // Bright red!
-console.log('🔴 RED BACKGROUND - NEW CODE IS RUNNING!');
 
 // ============================================
 // GET CLASS ICON (FALLBACK)
@@ -87,7 +87,7 @@ async function fetchScorecard() {
     }
     
     try {
-        const apiUrl = `https://guild-api.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
+        const apiUrl = `https://bonjourthere2.mikeyvandamme.workers.dev/?guild=${encodeURIComponent(guildInput)}&realm=${realm}&region=${region}`;
         console.log('📡 Fetching from worker:', apiUrl);
         
         const response = await fetch(apiUrl);
@@ -127,7 +127,7 @@ function renderGuildData(members, data) {
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
     // ============================================
-    // VERSION BANNER - Visible confirmation of update
+    // VERSION BANNER
     // ============================================
     const existingBanner = document.getElementById('versionBanner');
     if (existingBanner) existingBanner.remove();
