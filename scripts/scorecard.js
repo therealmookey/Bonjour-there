@@ -1,4 +1,4 @@
-// scorecard.js - With reliable class images
+// scorecard.js - Opens armory page for portraits
 const CLASS_COLORS = {
     'Warrior': '#C79C6E',
     'Paladin': '#F58CBA',
@@ -25,27 +25,13 @@ const RANK_NAMES = {
 };
 
 // ============================================
-// CLASS IMAGES (RELIABLE CDN)
+// GENERATE ARMORY URL
 // ============================================
-function getClassImageUrl(className) {
-    // Official WoW class icons from a reliable CDN
-    const classMap = {
-        'Warrior': 'warrior',
-        'Paladin': 'paladin',
-        'Hunter': 'hunter',
-        'Rogue': 'rogue',
-        'Priest': 'priest',
-        'Death Knight': 'deathknight',
-        'Shaman': 'shaman',
-        'Mage': 'mage',
-        'Warlock': 'warlock',
-        'Monk': 'monk',
-        'Druid': 'druid',
-        'Demon Hunter': 'demonhunter',
-        'Evoker': 'evoker'
-    };
-    const key = classMap[className] || 'default';
-    return `https://wow.zamimg.com/images/wow/icons/large/class_${key}.jpg`;
+function getArmoryUrl(characterName, realm, region) {
+    if (!characterName || !realm) return null;
+    const cleanName = characterName.toLowerCase().replace(/ /g, '-');
+    const cleanRealm = realm.toLowerCase().replace(/ /g, '-');
+    return `https://worldofwarcraft.blizzard.com/${region}/character/${cleanRealm}/${cleanName}/`;
 }
 
 // ============================================
@@ -91,7 +77,7 @@ async function fetchScorecard() {
             throw new Error('No members found');
         }
         
-        renderGuildData(data.members, data);
+        renderGuildData(data.members, data, region);
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -105,7 +91,7 @@ async function fetchScorecard() {
     }
 }
 
-function renderGuildData(members, data) {
+function renderGuildData(members, data, region) {
     members.sort((a, b) => a.rank - b.rank);
     
     document.getElementById('navGuildName').textContent = data.guild || document.getElementById('guildInput').value.trim();
@@ -113,13 +99,13 @@ function renderGuildData(members, data) {
     document.getElementById('memberCount').textContent = `👥 ${members.length} Members`;
     document.getElementById('lastUpdated').textContent = `🔄 ${data.updated || new Date().toLocaleString()}`;
     
-    renderScorecards(members);
+    renderScorecards(members, region);
 }
 
 // ============================================
 // RENDER SCORECARD CARDS
 // ============================================
-function renderScorecards(members) {
+function renderScorecards(members, region = 'eu') {
     const grid = document.getElementById('scorecardGrid');
     if (!grid) return;
     
@@ -140,13 +126,15 @@ function renderScorecards(members) {
         const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
         const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
         const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-        const classImage = getClassImageUrl(member.class);
+        const armoryUrl = getArmoryUrl(member.name, member.realm || 'outland', region);
         
         card.innerHTML = `
             <div class="rank-badge">${rankEmoji}</div>
             <div class="class-indicator" style="background: ${classColor};"></div>
             <div class="card-header">
-                <img class="class-image" src="${classImage}" alt="${member.class}" loading="lazy">
+                <div class="character-avatar" style="background: ${classColor};">
+                    ${member.name ? member.name.charAt(0).toUpperCase() : '?'}
+                </div>
                 <div>
                     <div class="player-name">${member.name || 'Unknown'}</div>
                     <div class="player-class">${member.class || 'Unknown'} • ${member.race || 'Unknown'}</div>
@@ -164,61 +152,18 @@ function renderScorecards(members) {
                 </div>
             </div>
             <div class="card-footer">
-                <span class="click-hint">👆 Click for details</span>
+                <span class="click-hint">👆 Click to view on Armory</span>
             </div>
         `;
         
         card.addEventListener('click', function() {
-            showCharacterDetails(member);
+            if (armoryUrl) {
+                window.open(armoryUrl, '_blank');
+            }
         });
         
         grid.appendChild(card);
     });
-}
-
-// ============================================
-// SHOW CHARACTER DETAILS
-// ============================================
-function showCharacterDetails(member) {
-    const existingModal = document.querySelector('.character-modal');
-    if (existingModal) existingModal.remove();
-    
-    const rankName = RANK_NAMES[member.rank] || `Rank ${member.rank}`;
-    const classColor = CLASS_COLORS[member.class] || '#FFFFFF';
-    const classImage = getClassImageUrl(member.class);
-    
-    const modal = document.createElement('div');
-    modal.className = 'character-modal';
-    modal.innerHTML = `
-        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
-        <div class="modal-content">
-            <button class="modal-close" onclick="this.closest('.character-modal').remove()">✕</button>
-            <div class="modal-header">
-                <img class="modal-image" src="${classImage}" alt="${member.class}">
-                <div class="modal-class-indicator" style="background: ${classColor};"></div>
-                <div>
-                    <h2>${member.name}</h2>
-                    <p class="modal-subtitle">${member.class} • ${member.race}</p>
-                    <p class="modal-rank">${rankName}</p>
-                </div>
-            </div>
-            <div class="modal-stats">
-                <div class="modal-stat">
-                    <span class="modal-stat-label">Level</span>
-                    <span class="modal-stat-value">${member.level || 0}</span>
-                </div>
-                <div class="modal-stat">
-                    <span class="modal-stat-label">Achievements</span>
-                    <span class="modal-stat-value">${(member.achievement_points || 0).toLocaleString()}</span>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button onclick="this.closest('.character-modal').remove()">Close</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
 }
 
 function showError(message) {
@@ -230,4 +175,4 @@ function showError(message) {
 }
 
 window.fetchScorecard = fetchScorecard;
-console.log('✅ scorecard.js loaded (with class images)');
+console.log('✅ scorecard.js loaded (with armory links)');
